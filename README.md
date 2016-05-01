@@ -8,7 +8,8 @@ web media content analysis framework
 ### How to run
 
 #### start rabbitmq 
-- [for mac] execute /usr/local/sbin/rabbitmq-server in terminal
+- [for mac] execute "/usr/local/sbin/rabbitmq-server" in terminal
+- [for linux] execute "sudo rabbitmq-plugins enable rabbitmq_management" in terminal
 - go to http://localhost:15672/
 - login (Name: guest, Password: guest)
 
@@ -19,7 +20,7 @@ web media content analysis framework
 
 ### How to use
 - if you get "request failed"/"Error 500" you have to create a folder called "cache" manually in your project folder (same folder as "lib", "src", "target")
-- call the following comman in your terminal
+- call the following command in your terminal
 ```
 curl -v -H "accept:application/x-turtle" "http://localhost:8080/myapp/resource?url={RESOURCE-URI}"
 ```
