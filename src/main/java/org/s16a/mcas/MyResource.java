@@ -117,16 +117,18 @@ public class MyResource {
 		// get URLs headers
 		Map<String, List<String>> map = conn.getHeaderFields();
 		int MAX_CONTENT_LENGTH = 50000000; // ca. 50MB
-		Set<String> VALID_CONTENT_TYPES = new HashSet<String>(Arrays.asList("image/jpeg", "image/png"));
+		Set<String> VALID_CONTENT_TYPES = new HashSet<String>(Arrays.asList("image/jpeg", "image/png", "audio/wav", "audio/x-wav", "audio/vnd.wave"));
 
 		// TODO: this is just an example to accept jpeg images only
 		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
 		String contentType = map.get("Content-Type").get(0);
 
 		if (contentLength > MAX_CONTENT_LENGTH) {
+			System.out.println("file too huge");
 			throw new MCASException("content length exceeded");
 		}
 		if (!VALID_CONTENT_TYPES.contains(contentType)) {
+			System.out.println("invalid  content type");
 			throw new MCASException("content type invalid");
 		}
 
@@ -134,7 +136,6 @@ public class MyResource {
 		Model model = createAndStoreBasicModel(url, filename, map);
 
 		// (7)
-
 		String QUEUE_NAME = "download";
 
 		ConnectionFactory factory = new ConnectionFactory();
@@ -144,7 +145,9 @@ public class MyResource {
 		channel.queueDeclare(QUEUE_NAME, true, false, false, null);
 		String message = resourceUrl;
 		channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
-		//System.out.println(" [x] Sent '" + message + "'");
+
+		System.out.println(" [x] Sent '" + message + "'");
+
 		channel.close();
 		connection.close();
 		
@@ -157,12 +160,12 @@ public class MyResource {
 
 		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
 		String contentType = map.get("Content-Type").get(0);
-		
+
 		someResource.addProperty(DC.identifier, filename);
 		someResource.addLiteral(DC.format, contentType);
 		someResource.addLiteral(DCTerms.extent, contentLength);
 		// TODO: put more info from Header into RDF
-		
+
 		FileWriter out = new FileWriter(filename);
 		try {
 			model.write(out, "TURTLE");
