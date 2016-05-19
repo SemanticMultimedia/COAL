@@ -25,7 +25,7 @@ public class Enqueuer {
 		// (3) enqueue for the analyses
 
 		Map<String, List<Property>> analyses = new HashMap<String, List<Property>>();
-		analyses.put("image/jpeg", Arrays.asList(MCAS.mediainfo, MCAS.vcd));
+		analyses.put("image/jpeg", Arrays.asList(MCAS.or, MCAS.mediainfo, MCAS.vcd));
 		analyses.put("text/plain", Arrays.asList(MCAS.ner));
 
 		// (1)
@@ -43,7 +43,9 @@ public class Enqueuer {
 				channel.queueDeclare(QUEUE_NAME, true, false, false, null);
 				String message = url;
 				channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
-				//System.out.println(" [x] Sent '" + message + "'");
+
+				System.out.println(" [x] Sent '" + message + "'");
+
 				channel.close();
 				connection.close();
 			}			
