@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.s16a.mcas.Hasher;
+import org.s16a.mcas.Cache;
 import org.s16a.mcas.MCAS;
 import org.s16a.mcas.util.MediaInfo;
 
@@ -52,17 +52,18 @@ public class MediainfoWorker {
 	}
 
 	private static void extractMediainfo(String url) throws IOException {
+		Cache cache = new Cache(url);
 
 		// open model
 		Model model = ModelFactory.createDefaultModel();
-		String modelFileName = Hasher.getCacheFilename(url);
+		String modelFileName = cache.getFilePath("data.ttl");
 		File f = new File(modelFileName);
 
 		if (f.exists()) {
 			model.read(modelFileName);
 		}
 
-		String dataFileName = Hasher.getCacheFilename(url) + ".data";
+		String dataFileName = cache.getFilePath("data.jpg");
 
 		MediaInfo info = new MediaInfo();
 		info.open(new File(dataFileName));		
@@ -91,15 +92,18 @@ public class MediainfoWorker {
 		r.addLiteral(model.createProperty("http://ogp.me/ns#image:height"), height);
 		r.addLiteral(model.createProperty("http://ogp.me/ns#image:width"), width);
 		model.getResource(url).addProperty(MCAS.mediainfo, r);
-		
+		System.out.println(model.getResource(url).addProperty(MCAS.mediainfo, r));
 		FileWriter out = new FileWriter(modelFileName);
 		try {
+			System.out.println("Mediainfo try save");
 			model.write(out, "TURTLE");
+
 		} finally {
 			try {
 				out.close();
 			} catch (IOException closeException) {
 				// ignore
+				System.out.println("Fehler!!!");
 			}
 		}
 	}

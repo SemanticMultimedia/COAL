@@ -18,10 +18,8 @@ public class MCAS {
     
     /** <p>The namespace of the vocabalary as a resource</p> */
     public static final Resource NAMESPACE  = m_model.createResource( NS );
-    
+
+    public static final Property download   = m_model.createProperty( NS + "download" );
     public static final Property mediainfo  = m_model.createProperty( NS + "mediainfo" );
-    public static final Property vcd        = m_model.createProperty( NS + "vcd" );
-    public static final Property ner        = m_model.createProperty( NS + "ner" );
-    public static final Property or         = m_model.createProperty( NS + "or" );
-    
+
 }

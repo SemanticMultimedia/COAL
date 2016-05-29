@@ -20,8 +20,7 @@ web media content analysis framework
 
 
 ### How to use
-- if you get "request failed"/"Error 500" you have to create a folder called "cache" manually in your project folder (same folder as "lib", "src", "target")
 - call the following command in your terminal
 ```
-curl -v -H "accept:application/x-turtle" "http://localhost:8080/myapp/resource?url=RESOURCE-URI"
+curl -v -H "accept:application/x-turtle" "http://localhost:8080/coal/resource?url=RESOURCE-URI"
 ```
