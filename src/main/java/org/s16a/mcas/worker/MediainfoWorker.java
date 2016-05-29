@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.s16a.mcas.Cache;
+import org.s16a.mcas.Enqueuer;
 import org.s16a.mcas.MCAS;
 import org.s16a.mcas.util.MediaInfo;
 
@@ -41,7 +42,7 @@ public class MediainfoWorker {
 
 				System.out.println(" [x] Received '" + message + "'");
 				try {
-					extractMediainfo(message);
+					extractMediainfoSound(message);
 				} finally {
 					System.out.println(" [x] Done");
 					channel.basicAck(envelope.getDeliveryTag(), false);
@@ -94,13 +95,65 @@ public class MediainfoWorker {
 		model.getResource(url).addProperty(MCAS.mediainfo, r);
 		System.out.println(model.getResource(url).addProperty(MCAS.mediainfo, r));
 		FileWriter out = new FileWriter(modelFileName);
+
 		try {
 			System.out.println("Mediainfo try save");
 			model.write(out, "TURTLE");
-
 		} finally {
 			try {
 				out.close();
+
+				try {
+					Enqueuer.workerFinished(MCAS.mediainfo, cache);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} catch (IOException closeException) {
+				// ignore
+				System.out.println("Fehler!!!");
+			}
+		}
+	}
+
+	private static void extractMediainfoSound(String url) throws IOException {
+		Cache cache = new Cache(url);
+
+		// open model
+		Model model = ModelFactory.createDefaultModel();
+		String modelFileName = cache.getFilePath("data.ttl");
+		File f = new File(modelFileName);
+
+		if (f.exists()) {
+			model.read(modelFileName);
+		}
+
+		String dataFileName = cache.getFilePath("data.mp3");
+
+		MediaInfo info = new MediaInfo();
+		info.open(new File(dataFileName));
+
+		String bitRate = info.get(MediaInfo.StreamKind.Audio, 0, "BitRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+
+		Resource r = model.createResource();
+		/*r.addLiteral(DC.format, format);*/
+		r.addLiteral(model.createProperty("Bitrate"), bitRate);
+
+		model.getResource(url).addProperty(MCAS.mediainfo, r);
+		System.out.println(model.getResource(url).addProperty(MCAS.mediainfo, r));
+		FileWriter out = new FileWriter(modelFileName);
+
+		try {
+			System.out.println("Mediainfo try save");
+			model.write(out, "TURTLE");
+		} finally {
+			try {
+				out.close();
+
+				try {
+					Enqueuer.workerFinished(MCAS.mediainfo, cache);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			} catch (IOException closeException) {
 				// ignore
 				System.out.println("Fehler!!!");

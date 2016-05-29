@@ -31,25 +31,26 @@ public class Enqueuer {
             model.read(modelFileName);
         }
 
-		for (Property sleepingWorker : workerDependencies.get(finishedWorker)) {
-			if (model.getResource(cache.getUrl()).getProperty(sleepingWorker) == null) {
-				System.out.println("enqueue for " + sleepingWorker.toString());
-								
-				String QUEUE_NAME = sleepingWorker.toString();
-				ConnectionFactory factory = new ConnectionFactory();
-				factory.setHost("localhost");
-				Connection connection = factory.newConnection();
-				Channel channel = connection.createChannel();
-				channel.queueDeclare(QUEUE_NAME, true, false, false, null);
-				String message = cache.getUrl();
-				channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+        if(workerDependencies.containsKey(finishedWorker)) {
+            for (Property sleepingWorker : workerDependencies.get(finishedWorker)) {
+                if (model.getResource(cache.getUrl()).getProperty(sleepingWorker) == null) {
+                    System.out.println("enqueue for " + sleepingWorker.toString());
 
-				System.out.println(" [x] Sent '" + message + "'");
+                    String QUEUE_NAME = sleepingWorker.toString();
+                    ConnectionFactory factory = new ConnectionFactory();
+                    factory.setHost("localhost");
+                    Connection connection = factory.newConnection();
+                    Channel channel = connection.createChannel();
+                    channel.queueDeclare(QUEUE_NAME, true, false, false, null);
+                    String message = cache.getUrl();
+                    channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
 
-				channel.close();
-				connection.close();
-			}			
-			
+                    System.out.println(" [x] Sent '" + message + "'");
+
+                    channel.close();
+                    connection.close();
+                }
+            }
 		}
 
 	}
