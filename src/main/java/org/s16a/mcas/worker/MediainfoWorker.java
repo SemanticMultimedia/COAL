@@ -3,10 +3,6 @@ package org.s16a.mcas.worker;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.s16a.mcas.Cache;
 import org.s16a.mcas.Enqueuer;
@@ -76,17 +72,7 @@ public class MediainfoWorker {
 	}
 
     private static String simplifyMime(String mimetype) {
-        Map<String, List<String>> analyses = new HashMap<String, List<String>>();
-        analyses.put("image", Arrays.asList("image/jpeg", "image/png", "image/gif"));
-        analyses.put("audio", Arrays.asList("audio/x-mpeg-3", "audio/mpeg3", "audio/x-mpeg", "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/vnd.wave"));
-
-        for (Map.Entry<String, List<String>> entry : analyses.entrySet()) {
-            if(entry.getValue().contains(mimetype.toLowerCase())) {
-                return entry.getKey();
-            }
-        }
-
-        return "";
+        return mimetype.split("/")[0];
     }
 
 	private static void extractMediainfoImage(String url) throws IOException {
