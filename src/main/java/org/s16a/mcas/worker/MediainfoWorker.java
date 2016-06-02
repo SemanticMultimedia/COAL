@@ -87,7 +87,7 @@ public class MediainfoWorker {
 			model.read(modelFileName);
 		}
 
-		String dataFileName = cache.getDataFilePath();
+		String dataFileName = cache.getResourceFilePath();
 
 		MediaInfo info = new MediaInfo();
 		info.open(new File(dataFileName));		
