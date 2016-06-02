@@ -171,16 +171,7 @@ public class ResourceHandler {
 
 		return model;
 	}
-
-	private static String getFileExtension(File file) {
-		String name = file.getName();
-		try {
-			return name.substring(name.lastIndexOf(".") + 1);
-		} catch (Exception e) {
-			return "";
-		}
-	}
-
+    
 	private boolean checkAcceptParam(String acceptParam) {
 		// TODO Auto-generated method stub
 		return true;
