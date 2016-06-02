@@ -58,13 +58,13 @@ public class Cache {
 		return getPath() + fileName;
 	}
 
-	public File getDataFile(String fileName){
-		return new File(getDataFilePath());
+	public File getResourceFile(String fileName){
+		return new File(getResourceFilePath());
 	}
-	public String getDataFilePath(){
-		return getPath() + "data." + getDataFileExtension();
+	public String getResourceFilePath(){
+		return getPath() + "data." + getResourceFileExtension();
 	}
-	public String getDataFileExtension(){
+	public String getResourceFileExtension(){
 		return getFileExtension(new File(this.url));
 	}
 
