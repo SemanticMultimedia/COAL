@@ -171,7 +171,7 @@ public class ResourceHandler {
 
 		return model;
 	}
-
+    
 	private boolean checkAcceptParam(String acceptParam) {
 		// TODO Auto-generated method stub
 		return true;
