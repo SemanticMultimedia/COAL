@@ -35,14 +35,33 @@ public class MediainfoWorker {
 
 		channel.basicQos(1);
 
+
+
 		final Consumer consumer = new DefaultConsumer(channel) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-				String message = new String(body, "UTF-8");
+				String url = new String(body, "UTF-8");
 
-				System.out.println(" [x] Received '" + message + "'");
+				System.out.println(" [x] Received '" + url + "'");
 				try {
-					extractMediainfoSound(message);
+
+                    Cache cache = new Cache(url);
+
+                    Model model = ModelFactory.createDefaultModel();
+                    model.read(cache.getFilePath("data.ttl"));
+
+                    String mimetype = simplifyMime(model.getResource(url).getProperty(DC.format).getString());
+
+                    if(mimetype == "audio") {
+                        System.out.println(" [x] Mime type: audio ");
+                        extractMediainfoAudio(url);
+                    } else if(mimetype == "image") {
+                        System.out.println(" [x] Mime type: Image ");
+                        extractMediainfoImage(url);
+                    } else {
+                        System.out.println(" [x] Unsupported mime type ");
+                    }
+
 				} finally {
 					System.out.println(" [x] Done");
 					channel.basicAck(envelope.getDeliveryTag(), false);
@@ -52,7 +71,11 @@ public class MediainfoWorker {
 		channel.basicConsume(TASK_QUEUE_NAME, false, consumer);
 	}
 
-	private static void extractMediainfo(String url) throws IOException {
+    private static String simplifyMime(String mimetype) {
+        return mimetype.split("/")[0];
+    }
+
+	private static void extractMediainfoImage(String url) throws IOException {
 		Cache cache = new Cache(url);
 
 		// open model
@@ -64,7 +87,7 @@ public class MediainfoWorker {
 			model.read(modelFileName);
 		}
 
-		String dataFileName = cache.getFilePath("data.jpg");
+		String dataFileName = cache.getResourceFilePath();
 
 		MediaInfo info = new MediaInfo();
 		info.open(new File(dataFileName));		
@@ -74,19 +97,6 @@ public class MediainfoWorker {
 		String height = info.get(MediaInfo.StreamKind.Image, 0, "Height", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 		String bits = info.get(MediaInfo.StreamKind.Image, 0, "Bit depth", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 		String compressionMode = info.get(MediaInfo.StreamKind.Image, 0, "Compression mode", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
-		
-		// Format : PNG
-		// Format/Info : Portable Network Graphic
-		// File size : 133 KiB
-		//
-		// Image
-		// Format : PNG
-		// Format/Info : Portable Network Graphic
-		// Width : 954 pixels
-		// Height : 503 pixels
-		// Bit depth : 32 bits
-		// Compression mode : Lossless
-		// Stream size : 133 KiB (100%)
 		
 		Resource r = model.createResource();
 		r.addLiteral(DC.format, format);
@@ -115,7 +125,7 @@ public class MediainfoWorker {
 		}
 	}
 
-	private static void extractMediainfoSound(String url) throws IOException {
+	private static void extractMediainfoAudio(String url) throws IOException {
 		Cache cache = new Cache(url);
 
 		// open model
@@ -132,11 +142,46 @@ public class MediainfoWorker {
 		MediaInfo info = new MediaInfo();
 		info.open(new File(dataFileName));
 
+		String fileExtension = info.get(MediaInfo.StreamKind.General, 0, "FileExtension", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String fileSize = info.get(MediaInfo.StreamKind.General, 0, "FileSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+
+		String format = info.get(MediaInfo.StreamKind.Audio, 0, "Format", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String formatVersion = info.get(MediaInfo.StreamKind.Audio, 0, "Format_Version", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String formatProfile = info.get(MediaInfo.StreamKind.Audio, 0, "Format_Profile", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String codecId = info.get(MediaInfo.StreamKind.Audio, 0, "CodecID", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+
+		String duration = info.get(MediaInfo.StreamKind.Audio, 0, "Duration", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String bitRateMode = info.get(MediaInfo.StreamKind.Audio, 0, "BitRate_Mode", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 		String bitRate = info.get(MediaInfo.StreamKind.Audio, 0, "BitRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 
+		String channels = info.get(MediaInfo.StreamKind.Audio, 0, "Channels", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String channelPositions = info.get(MediaInfo.StreamKind.Audio, 0, "ChannelPositions", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+
+		String samplingRate = info.get(MediaInfo.StreamKind.Audio, 0, "SamplingRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String streamSize = info.get(MediaInfo.StreamKind.Audio, 0, "StreamSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+
+
 		Resource r = model.createResource();
-		/*r.addLiteral(DC.format, format);*/
-		r.addLiteral(model.createProperty("Bitrate"), bitRate);
+
+		r.addLiteral(model.createProperty("fileSize"), fileSize);
+		r.addLiteral(model.createProperty("fileExtension"), fileExtension);
+
+		r.addLiteral(model.createProperty("format"), format);
+		r.addLiteral(model.createProperty("formatVersion"), formatVersion);
+		r.addLiteral(model.createProperty("formatProfile"), formatProfile);
+		r.addLiteral(model.createProperty("codecId"), codecId);
+
+		r.addLiteral(model.createProperty("duration"), duration);
+
+		r.addLiteral(model.createProperty("bitrate"), bitRate);
+		r.addLiteral(model.createProperty("bitRateMode"), bitRateMode);
+
+		r.addLiteral(model.createProperty("channels"), channels);
+		r.addLiteral(model.createProperty("channelPositions"), channelPositions);
+
+		r.addLiteral(model.createProperty("samplingRate"), samplingRate);
+		r.addLiteral(model.createProperty("streamSize"), streamSize);
+
 
 		model.getResource(url).addProperty(MCAS.mediainfo, r);
 		System.out.println(model.getResource(url).addProperty(MCAS.mediainfo, r));

@@ -19,7 +19,6 @@ public class Cache {
 	public String getCacheId(){
 		return this.hash;
 	}
-
 	public String getUrl(){
 		return this.url;
 	}
@@ -33,6 +32,15 @@ public class Cache {
 		}
 		m.update(input.getBytes(), 0, input.length());
 		return new BigInteger(1, m.digest()).toString(16);
+	}
+
+	private static String getFileExtension(File file) {
+		String name = file.getName();
+		try {
+			return name.substring(name.lastIndexOf(".") + 1);
+		} catch (Exception e) {
+			return "";
+		}
 	}
 
 	public String getPath(){
@@ -50,5 +58,14 @@ public class Cache {
 		return getPath() + fileName;
 	}
 
+	public File getResourceFile(String fileName){
+		return new File(getResourceFilePath());
+	}
+	public String getResourceFilePath(){
+		return getPath() + "data." + getResourceFileExtension();
+	}
+	public String getResourceFileExtension(){
+		return getFileExtension(new File(this.url));
+	}
 
 }
