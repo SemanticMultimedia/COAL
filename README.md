@@ -18,9 +18,21 @@ web media content analysis framework
 - run COAL/src/main/java/org/s16a/mcas/Main.java
 - start the workers you want to use
 
+#### start Application from cammand line
+- [for Linux] sudo apt-get install maven
+- [for mac] brew install maven 
+- navigate into COAL-project
+- mvn clean install
+- java -jar target/org.s16a.mcas-1.0-SNAPSHOT.jar
+
+#### restart RabbitMQ
+- run rabbitmqctl stop_app
+- run rabbitmqctl reset
+- run rabbitmqctl start_app
 
 ### How to use
 - call the following command in your terminal
 ```
 curl -v -H "accept:application/x-turtle" "http://localhost:8080/coal/resource?url=RESOURCE-URI"
 ```
+
