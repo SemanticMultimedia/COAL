@@ -21,7 +21,8 @@ public class Enqueuer {
 	public static void workerFinished(Property finishedWorker, Cache cache) throws Exception {
         /* Enter the workers and the workers which are waiting for them to complete */
 		Map<Property, List<Property>> workerDependencies = new HashMap<Property, List<Property>>();
-		workerDependencies.put(MCAS.download, Arrays.asList(MCAS.mediainfo));
+		workerDependencies.put(MCAS.download, Arrays.asList(MCAS.converter));
+        workerDependencies.put(MCAS.converter, Arrays.asList(MCAS.mediainfo));
 
         Model model = ModelFactory.createDefaultModel();
         String modelFileName = cache.getFilePath("data.ttl");
