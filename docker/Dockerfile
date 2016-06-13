@@ -45,3 +45,16 @@ RUN pip install simplejson
 # Pythonpath
 RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin"" >> /root/.bashrc
 
+# Install RabbitMQ
+RUN apt-get install rabbitmq-server -y
+
+# Install and clone COAl
+RUN apt-get install maven -y
+RUN cd ~/
+RUN git clone https://github.com/NicoKnoll/COAL
+
+# Run RabbitMQ, COAL Server and Workers
+RUN cd COAL & rabbitmq-server
+RUN mvn clean install -DskipTests=true
+RUN java -jar target/org.s16a.mcas-1.0-SNAPSHOT.jar & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/DownloadWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/MediainfoWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/ConverterWorker
+
