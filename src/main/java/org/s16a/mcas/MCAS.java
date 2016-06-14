@@ -22,5 +22,6 @@ public class MCAS {
     public static final Property download   = m_model.createProperty( NS + "download" );
     public static final Property mediainfo  = m_model.createProperty( NS + "mediainfo" );
     public static final Property converter  = m_model.createProperty( NS + "converter" );
+    public static final Property segments   = m_model.createProperty( NS + "segments" );
 
 }

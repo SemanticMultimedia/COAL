@@ -1,18 +1,16 @@
 package org.s16a.mcas.worker;
 
 import com.rabbitmq.client.*;
-import org.s16a.mcas.Enqueuer;
-import org.s16a.mcas.MCAS;
 import org.s16a.mcas.Cache;
+import org.s16a.mcas.MCAS;
 
-import java.io.*;
-import java.util.Objects;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
-import static java.lang.System.in;
+public class SegmentationWorker {
 
-public class ConverterWorker {
-
-	private static final String TASK_QUEUE_NAME = MCAS.converter.toString();
+	private static final String TASK_QUEUE_NAME = MCAS.segments.toString();
 
 	public static void main(String[] argv) throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
@@ -32,7 +30,7 @@ public class ConverterWorker {
 
 				System.out.println(" [x] Received '" + message + "'");
 				try {
-					convertToWav(message);
+					generateSegments(message);
 				} finally {
 					System.out.println(" [x] Done");
 					channel.basicAck(envelope.getDeliveryTag(), false);
@@ -42,12 +40,12 @@ public class ConverterWorker {
 		channel.basicConsume(TASK_QUEUE_NAME, false, consumer);
 	}
 
-	private static void convertToWav(String url) throws IOException {
+	private static void generateSegments(String url) throws IOException {
 
 
 		Cache cache = new Cache(url);
 
-		Process p = Runtime.getRuntime().exec("/usr/bin/python ./src/main/java/org/s16a/mcas/worker/ConverterWorker.py " + cache.getPath());
+		Process p = Runtime.getRuntime().exec("/usr/bin/python ./src/main/java/org/s16a/mcas/worker/SegmentationWorker.py " + cache.getPath());
 		BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
 		String line;
@@ -57,17 +55,10 @@ public class ConverterWorker {
 		}
 
 		if (lastLine.equals("0")) {
-			System.out.println("[x] Converted successfully");
-			try {
-                Enqueuer.workerFinished(MCAS.converter, cache);
-            } catch (Exception e) {
-                e.printStackTrace();
-			}
+			System.out.println("[x] Extracted segments successfully");
 		} else {
 			System.out.println("[E] SOMETHING WENT WRONG");
 		}
-
 	}
-
 }
 
