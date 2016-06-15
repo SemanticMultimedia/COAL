@@ -42,6 +42,7 @@ RUN cd mlpy-3.5.0 && python setup.py install
 RUN pip install scikit-learn==0.16.1
 RUN pip install scikits.talkbox
 RUN pip install simplejson
+RUN pip install mutagen
 
 # Pythonpath
 RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin"" >> /root/.bashrc
