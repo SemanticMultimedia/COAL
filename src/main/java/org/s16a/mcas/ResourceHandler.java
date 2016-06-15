@@ -150,11 +150,22 @@ public class ResourceHandler {
 
 		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
 		String contentType = map.get("Content-Type").get(0);
+        String lastModified = map.get("Last-Modified").get(0);
 
-		someResource.addProperty(DC.identifier, filename);
+        Set<Map.Entry<String, List<String>>> entrySet = map.entrySet();
+        for (Map.Entry<String, List<String>> entry : entrySet) {
+            String headerName = entry.getKey();
+            System.out.println("Header Name:" + headerName);
+            List<String> headerValues = entry.getValue();
+            for (String value : headerValues) {
+                System.out.print("Header value:" + value);
+            }
+            System.out.println();
+        }
+        someResource.addProperty(DC.identifier, filename);
 		someResource.addLiteral(DC.format, contentType);
-		someResource.addLiteral(DCTerms.extent, contentLength);
-		// TODO: put more info from Header into RDF
+        someResource.addLiteral(DCTerms.extent, contentLength);
+		someResource.addLiteral(DCTerms.modified, lastModified);
 
 		FileWriter out = new FileWriter(filename);
 
