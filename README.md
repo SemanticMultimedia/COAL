@@ -15,7 +15,7 @@ web media content analysis framework
 - login (Name: guest, Password: guest)
 
 #### start Application
-- run 'COAL/src/main/java/org/s16a/mcas/Main.java' in terminal
+- start main class
 - start the workers you want to use
 
 #### start Application (Server) from cammand line

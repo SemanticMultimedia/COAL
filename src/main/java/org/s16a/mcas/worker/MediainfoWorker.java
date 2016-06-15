@@ -52,14 +52,14 @@ public class MediainfoWorker {
 
                     String mimetype = simplifyMime(model.getResource(url).getProperty(DC.format).getString());
 
-                    if(mimetype == "audio") {
+                    if(mimetype.equals("audio")) {
                         System.out.println(" [x] Mime type: audio ");
                         extractMediainfoAudio(url);
                     } else if(mimetype == "image") {
                         System.out.println(" [x] Mime type: Image ");
                         extractMediainfoImage(url);
                     } else {
-                        System.out.println(" [x] Unsupported mime type ");
+                        System.out.println(" [x] Unsupported mime type: " + mimetype);
                     }
 
 				} finally {
