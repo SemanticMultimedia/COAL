@@ -6,6 +6,7 @@ MAINTAINER boeckhoff
 # TO RUN:          docker run -t -i boeckhoff/knowmin bash
 # TO MOUNT & RUN:  docker run -v /HOSTPATH/:/IMAGEPATH -t -i boeckhoff/knowmin
 
+# docker run -v /Library/Java/JavaVirtualMachines/jdk1.8.0_65.jdk -t -i -p 8080:8080 boeckhoff/knowmin"
 # Update
 
 RUN apt-get update
@@ -52,8 +53,11 @@ RUN apt-get install rabbitmq-server -y
 RUN apt-get install maven -y
 RUN git clone https://github.com/NicoKnoll/COAL
 
-# Run RabbitMQ, COAL Server and Workers
+# Run RabbitMQ
 WORKDIR "/knowmin/COAL"
-RUN rabbitmq-server -detached
-RUN mvn clean install -DskipTests=true
-RUN java -jar target/org.s16a.mcas-1.0-SNAPSHOT.jar & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/DownloadWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/MediainfoWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/ConverterWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/SegmentationWorker
+# RUN rabbitmq-server -detached
+
+# Run COAL Server and Workers
+RUN export JAVA_HOME=/knowmin/jdk
+# RUN mvn clean install -DskipTests=true
+# RUN java -jar target/org.s16a.mcas-1.0-SNAPSHOT.jar & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/DownloadWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/MediainfoWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/ConverterWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/SegmentationWorker

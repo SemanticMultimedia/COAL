@@ -106,23 +106,7 @@ public class MediainfoWorker {
 		System.out.println(model.getResource(url).addProperty(MCAS.mediainfo, r));
 		FileWriter out = new FileWriter(modelFileName);
 
-		try {
-			System.out.println("Mediainfo try save");
-			model.write(out, "TURTLE");
-		} finally {
-			try {
-				out.close();
-
-				try {
-					Enqueuer.workerFinished(MCAS.mediainfo, cache);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			} catch (IOException closeException) {
-				// ignore
-				System.out.println("Fehler!!!");
-			}
-		}
+		printTurtle(model, out, cache);
 	}
 
 	private static void extractMediainfoAudio(String url) throws IOException {
@@ -187,12 +171,16 @@ public class MediainfoWorker {
 		System.out.println(model.getResource(url).addProperty(MCAS.mediainfo, r));
 		FileWriter out = new FileWriter(modelFileName);
 
+		printTurtle(model, out, cache);
+	}
+
+	private static void printTurtle(Model model, FileWriter writer, Cache cache) {
 		try {
 			System.out.println("Mediainfo try save");
-			model.write(out, "TURTLE");
+			model.write(writer, "TURTLE");
 		} finally {
 			try {
-				out.close();
+				writer.close();
 
 				try {
 					Enqueuer.workerFinished(MCAS.mediainfo, cache);
