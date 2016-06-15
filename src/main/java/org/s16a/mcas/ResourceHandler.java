@@ -111,7 +111,6 @@ public class ResourceHandler {
 		int MAX_CONTENT_LENGTH = 500000000; // ca. 500MB
 		Set<String> VALID_CONTENT_TYPES = new HashSet<String>(Arrays.asList("image/jpeg", "image/png", "audio/x-mpeg-3", "audio/mpeg3", "audio/x-mpeg", "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/vnd.wave"));
 
-		// TODO: this is just an example to accept jpeg images only
 		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
 		String contentType = map.get("Content-Type").get(0);
 
@@ -152,16 +151,6 @@ public class ResourceHandler {
 		String contentType = map.get("Content-Type").get(0);
         String lastModified = map.get("Last-Modified").get(0);
 
-        Set<Map.Entry<String, List<String>>> entrySet = map.entrySet();
-        for (Map.Entry<String, List<String>> entry : entrySet) {
-            String headerName = entry.getKey();
-            System.out.println("Header Name:" + headerName);
-            List<String> headerValues = entry.getValue();
-            for (String value : headerValues) {
-                System.out.print("Header value:" + value);
-            }
-            System.out.println();
-        }
         someResource.addProperty(DC.identifier, filename);
 		someResource.addLiteral(DC.format, contentType);
         someResource.addLiteral(DCTerms.extent, contentLength);
@@ -175,8 +164,7 @@ public class ResourceHandler {
 			try {
 				out.close();
 			} catch (IOException closeException) {
-				// ignore
-				System.out.println(closeException);
+				System.out.println(closeException.getMessage());
 			}
 		}
 
@@ -184,7 +172,7 @@ public class ResourceHandler {
 	}
 
 	private boolean checkAcceptParam(String acceptParam) {
-		// TODO Auto-generated method stub
+
 		return true;
 	}
 }
