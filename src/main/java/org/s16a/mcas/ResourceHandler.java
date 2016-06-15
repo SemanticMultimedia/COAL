@@ -23,18 +23,9 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.validator.routines.UrlValidator;
 
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.AnonId;
-import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.RDFVisitor;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.vocabulary.DC;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.rabbitmq.client.Channel;
@@ -46,7 +37,7 @@ import com.rabbitmq.client.MessageProperties;
  * Root resource (exposed at "resource" path)
  */
 @Path("resource")
-public class MyResource {
+public class ResourceHandler {
 
 
 	@GET
@@ -100,7 +91,8 @@ public class MyResource {
 		}
 
 		// (3)
-		String filename = Hasher.getCacheFilename(resourceUrl);
+		Cache cache = new Cache(resourceUrl);
+		String filename = cache.getFilePath("data.ttl");
 
 		// (4)
 		File f = new File(filename);
@@ -116,17 +108,19 @@ public class MyResource {
 
 		// get URLs headers
 		Map<String, List<String>> map = conn.getHeaderFields();
-		int MAX_CONTENT_LENGTH = 50000000; // ca. 50MB
-		Set<String> VALID_CONTENT_TYPES = new HashSet<String>(Arrays.asList("image/jpeg", "image/png"));
+		int MAX_CONTENT_LENGTH = 500000000; // ca. 500MB
+		Set<String> VALID_CONTENT_TYPES = new HashSet<String>(Arrays.asList("image/jpeg", "image/png", "audio/x-mpeg-3", "audio/mpeg3", "audio/x-mpeg", "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/vnd.wave"));
 
 		// TODO: this is just an example to accept jpeg images only
 		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
 		String contentType = map.get("Content-Type").get(0);
 
 		if (contentLength > MAX_CONTENT_LENGTH) {
+			System.out.println("file too huge");
 			throw new MCASException("content length exceeded");
 		}
 		if (!VALID_CONTENT_TYPES.contains(contentType)) {
+			System.out.println("invalid  content type");
 			throw new MCASException("content type invalid");
 		}
 
@@ -134,17 +128,16 @@ public class MyResource {
 		Model model = createAndStoreBasicModel(url, filename, map);
 
 		// (7)
-
-		String QUEUE_NAME = "download";
-
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost("localhost");
 		Connection connection = factory.newConnection();
 		Channel channel = connection.createChannel();
-		channel.queueDeclare(QUEUE_NAME, true, false, false, null);
+		channel.queueDeclare(MCAS.download.toString(), true, false, false, null);
 		String message = resourceUrl;
-		channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
-		//System.out.println(" [x] Sent '" + message + "'");
+		channel.basicPublish("", MCAS.download.toString(), MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+
+		System.out.println(" [x] Sent '" + message + "'");
+
 		channel.close();
 		connection.close();
 		
@@ -157,13 +150,25 @@ public class MyResource {
 
 		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
 		String contentType = map.get("Content-Type").get(0);
-		
-		someResource.addProperty(DC.identifier, filename);
+        String lastModified = map.get("Last-Modified").get(0);
+
+        Set<Map.Entry<String, List<String>>> entrySet = map.entrySet();
+        for (Map.Entry<String, List<String>> entry : entrySet) {
+            String headerName = entry.getKey();
+            System.out.println("Header Name:" + headerName);
+            List<String> headerValues = entry.getValue();
+            for (String value : headerValues) {
+                System.out.print("Header value:" + value);
+            }
+            System.out.println();
+        }
+        someResource.addProperty(DC.identifier, filename);
 		someResource.addLiteral(DC.format, contentType);
-		someResource.addLiteral(DCTerms.extent, contentLength);
-		// TODO: put more info from Header into RDF
-		
+        someResource.addLiteral(DCTerms.extent, contentLength);
+		someResource.addLiteral(DCTerms.modified, lastModified);
+
 		FileWriter out = new FileWriter(filename);
+
 		try {
 			model.write(out, "TURTLE");
 		} finally {
@@ -171,6 +176,7 @@ public class MyResource {
 				out.close();
 			} catch (IOException closeException) {
 				// ignore
+				System.out.println(closeException);
 			}
 		}
 
