@@ -9,9 +9,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class SegmentationWorker {
+public class SpeechRecognitionWorker {
 
-	private static final String TASK_QUEUE_NAME = MCAS.segments.toString();
+	private static final String TASK_QUEUE_NAME = MCAS.speech.toString();
 
 	public static void main(String[] argv) throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
@@ -31,7 +31,7 @@ public class SegmentationWorker {
 
 				System.out.println(" [x] Received '" + message + "'");
 				try {
-					generateSegments(message);
+					speechRecognition(message);
 				} finally {
 					System.out.println(" [x] Done");
 					channel.basicAck(envelope.getDeliveryTag(), false);
@@ -41,12 +41,11 @@ public class SegmentationWorker {
 		channel.basicConsume(TASK_QUEUE_NAME, false, consumer);
 	}
 
-	private static void generateSegments(String url) throws IOException {
-
+	private static void speechRecognition(String url) throws IOException {
 
 		Cache cache = new Cache(url);
 
-		Process p = Runtime.getRuntime().exec("/usr/bin/python ./src/main/java/org/s16a/mcas/worker/SegmentationWorker.py " + cache.getPath());
+		Process p = Runtime.getRuntime().exec("/usr/bin/python ./src/main/java/org/s16a/mcas/worker/SpeechRecognitionWorker.py " + cache.getPath());
 		BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
 		String line;
@@ -56,15 +55,17 @@ public class SegmentationWorker {
 		}
 
 		if (lastLine.equals("0")) {
-			System.out.println("[x] Extracted segments successfully");
+			System.out.println("[x] extracted Text successfully");
 			try {
-                Enqueuer.workerFinished(MCAS.segments, cache);
+                Enqueuer.workerFinished(MCAS.speech, cache);
             } catch (Exception e) {
                 e.printStackTrace();
 			}
 		} else {
 			System.out.println("[E] SOMETHING WENT WRONG");
 		}
+
 	}
+
 }
 
