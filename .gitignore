@@ -1,0 +1,8 @@
+cache/
+cache/*
+target/
+target/*
+.idea/
+.idea/*
+org.s16a.mcas.iml
+curl_request.sh
