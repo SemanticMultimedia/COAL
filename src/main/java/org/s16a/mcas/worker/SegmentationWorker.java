@@ -15,7 +15,7 @@ public class SegmentationWorker {
 
 	public static void main(String[] argv) throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("localhost");
+		factory.setHost(System.getenv().get("RABBIT_HOST"));
 		final Connection connection = factory.newConnection();
 		final Channel channel = connection.createChannel();
 
