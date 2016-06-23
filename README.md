@@ -15,10 +15,11 @@ web media content analysis framework
 - login (Name: guest, Password: guest)
 
 #### start Application
+- set environment variable RABBIT_HOST to rabbitmq IP (e.g. localhost or $(docker-machine ip default))
 - start main class
 - start the workers you want to use
 
-#### start Application (Server) from cammand line
+#### start Application (Server) from command line
 - [for Linux] run 'sudo apt-get install maven' in terminal
 - [for mac] run 'brew install maven' in terminal
 - navigate into COAL-project
@@ -42,13 +43,14 @@ web media content analysis framework
 - [for mac] run 'eval "$(docker-machine env default)" ' to set environment variables
 
 #### build docker-image
-- run 'docker build -t boeckhoff/knowmin .' in terminal
+- run 'docker build -t semanticmultimedia/coal .'
 
 #### run docker-image
-- run 'docker run -t -i boeckhoff/knowmin bash' in terminal
+- [coal-rabbit] run 'docker run -d --hostname coal --name coal-rabbit -p 15672:15672 -e RABBITMQ_DEFAULT_USER=guest -e RABBITMQ_DEFAULT_PASS=guest rabbitmq:3-management'
+- [coal-server] run 'docker run -d --link coal-rabbit:rabbit --name coal-server -p 8080:8080 -t semanticmultimedia/coal' 
 
 ### How to use
 - call the following command in your terminal
 ```
-curl -v -H "accept:application/x-turtle" "http://localhost:8080/coal/resource?url=RESOURCE-URI"
+curl -v -H "accept:text/turtle" "http://localhost:8080/coal/resource?url=RESOURCE-URI"
 ```
