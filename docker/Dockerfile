@@ -6,59 +6,64 @@ MAINTAINER boeckhoff
 # TO RUN:          docker run -t -i boeckhoff/knowmin bash
 # TO MOUNT & RUN:  docker run -v /HOSTPATH/:/IMAGEPATH -t -i boeckhoff/knowmin
 
-# docker run -v /Library/Java/JavaVirtualMachines/jdk1.8.0_65.jdk -t -i -p 8080:8080 boeckhoff/knowmin"
-# Update
-
+# Update and install dependencies
 RUN apt-get update
+RUN apt-get upgrade -y
 
-# Create folder
+# Install dependencies
+RUN apt-get install -y \
+  git \
+  wget
 
-RUN mkdir knowmin
-WORKDIR "/knowmin"
+# Install Python dependencies
+##RUN apt-get install -y \
+##  python-pip \
+##  python-numpy \
+##  python-matplotlib \
+##  python-scipy \
+##  libgsl0-dev \
+##  python-eyed3
 
-# Install and clone
+##RUN wget http://sourceforge.net/projects/mlpy/files/mlpy%203.5.0/mlpy-3.5.0.tar.gz
+##RUN tar xvf mlpy-3.5.0.tar.gz
+##RUN cd mlpy-3.5.0 && python setup.py install
 
-RUN apt-get install git-all -y
-RUN apt-get install wget -y
-RUN apt-get install python-pip -y
-RUN git clone https://github.com/boeckhoff/pyAudioAnalysis.git
-RUN export PYTHONPATH=$PYTHONPATH:$(pwd)
-#RUN source ~/.bashrc
-
-# Python Dependencies
-
-RUN apt-get install python-numpy -y
-RUN apt-get install python-matplotlib -y
-RUN apt-get install python-scipy -y
-RUN apt-get install libgsl0-dev -y
-RUN apt-get install python-eyed3 -y
-
-RUN wget http://sourceforge.net/projects/mlpy/files/mlpy%203.5.0/mlpy-3.5.0.tar.gz
-RUN tar xvf mlpy-3.5.0.tar.gz
-RUN cd mlpy-3.5.0 && python setup.py install
+# Install Java dependencies
+RUN apt-get install -y \
+  openjdk-8-jdk \
+  maven
 
 # Pip dependencies
-
-RUN pip install scikit-learn==0.16.1
-RUN pip install scikits.talkbox
-RUN pip install simplejson
-RUN pip install mutagen
+##RUN pip install --upgrade pip
+##RUN pip install scikit-learn==0.16.1
+##RUN pip install scikits.talkbox
+##RUN pip install simplejson
 
 # Pythonpath
-RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin"" >> /root/.bashrc
+##RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin"" >> /root/.bashrc
 
-# Install RabbitMQ
-RUN apt-get install rabbitmq-server -y
+# Create folder
+RUN mkdir -p /knowmin/COAL
+WORKDIR /knowmin/COAL
 
-# Install and clone COAl
-RUN apt-get install maven -y
-RUN git clone https://github.com/NicoKnoll/COAL
+# Clone
+##RUN git clone https://github.com/boeckhoff/pyAudioAnalysis.git
+##RUN export PYTHONPATH=$PYTHONPATH:$(pwd)
+#RUN source ~/.bashrc
 
-# Run RabbitMQ
-WORKDIR "/knowmin/COAL"
-# RUN rabbitmq-server -detached
+# Install COAL
 
-# Run COAL Server and Workers
-RUN export JAVA_HOME=/knowmin/jdk
-# RUN mvn clean install -DskipTests=true
-# RUN java -jar target/org.s16a.mcas-1.0-SNAPSHOT.jar & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/DownloadWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/MediainfoWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/ConverterWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/SegmentationWorker
+##RUN git clone https://github.com/NicoKnoll/COAL
+ADD . /knowmin/COAL
+
+# Run RabbitMQ, COAL Server and Workers
+#RUN rabbitmq-server -detached
+
+ENV RABBIT_HOST $RABBIT_PORT_4369_TCP_ADDR
+
+RUN mvn clean install -DskipTests=true
+
+EXPOSE 8080
+
+CMD mvn exec:java
+#RUN java -jar target/org.s16a.mcas-1.0-SNAPSHOT.jar & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/DownloadWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/MediainfoWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/ConverterWorker & java -cp target/org.s16a.mcas-1.0-SNAPSHOT.jar org/s16a/mcas/worker/SegmentationWorker
