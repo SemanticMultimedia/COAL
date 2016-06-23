@@ -43,11 +43,10 @@ web media content analysis framework
 - [for mac] run 'eval "$(docker-machine env default)" ' to set environment variables
 
 #### build docker-image
-- run 'docker build -t semanticmultimedia/coal .'
+- run 'docker build -t boeckhoff/knowmin .'
 
 #### run docker-image
-- [coal-rabbit] run 'docker run -d --hostname coal --name coal-rabbit -p 15672:15672 -e RABBITMQ_DEFAULT_USER=guest -e RABBITMQ_DEFAULT_PASS=guest rabbitmq:3-management'
-- [coal-server] run 'docker run -d --link coal-rabbit:rabbit --name coal-server -p 8080:8080 -t semanticmultimedia/coal' 
+- docker run -v [PATH_TO_COAL_DIRECTORY_NO_SLASH]:/knowmin/COAL -t -i -p 8080:8080 boeckhoff/knowmin ./bash/startup.sh
 
 ### How to use
 - call the following command in your terminal

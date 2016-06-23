@@ -13,8 +13,8 @@ abstract class PythonWorker {
 
     public static void executePythonWorker (final Property taskQueueName, final String pathToPythonWorker, final String successMessage) throws Exception, IOException {
         ConnectionFactory factory = new ConnectionFactory();
-//        factory.setHost(System.getenv().get("RABBIT_HOST"));
-        factory.setHost("localhost");
+        factory.setHost(System.getenv().get("RABBIT_HOST"));
+        //factory.setHost("localhost");
 
         final Connection connection = factory.newConnection();
         final Channel channel = connection.createChannel();

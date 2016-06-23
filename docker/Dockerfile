@@ -37,20 +37,25 @@ RUN pip install --upgrade pip
 RUN pip install scikit-learn==0.16.1
 RUN pip install scikits.talkbox
 RUN pip install simplejson
+RUN pip install SpeechRecognition
+
 
 WORKDIR /knowmin
 
 # RabbitMQ
 RUN apt-get install -y rabbitmq-server
 
+# Audio Converter
+RUN apt-get install -y libav-tools
+
 # Install COAL
-RUN git clone https://github.com/NicoKnoll/COAL #Please keep in mind that cache will be used unless you change this line
-WORKDIR /knowmin/COAL
-RUN mkdir cache
-ADD . /knowmin/COAL
+#RUN git clone https://github.com/NicoKnoll/COAL #Please keep in mind that cache will be used unless you change this line
+#WORKDIR /knowmin/COAL
+#RUN mkdir cache
+#ADD . /knowmin/COAL
 
 # Install pyAudioAnalysis
-WORKDIR /knowmin/COAL/lib
+WORKDIR /knowmin
 RUN git clone https://github.com/boeckhoff/pyAudioAnalysis.git
 RUN export PYTHONPATH=$PYTHONPATH:$(pwd)
 
@@ -59,7 +64,7 @@ RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin/COAL/lib"" >> /root/.bashrc
 
 ENV RABBIT_HOST $RABBIT_PORT_4369_TCP_ADDR
 
+RUN mkdir COAL
 WORKDIR /knowmin/COAL
-RUN mvn clean install -DskipTests=true
 
 EXPOSE 8080

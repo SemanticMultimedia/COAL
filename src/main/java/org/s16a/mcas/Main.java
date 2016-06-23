@@ -13,8 +13,8 @@ import java.net.URI;
 
 public class Main {
 
-	//public static final String BASE_URI = "http://0.0.0.0:8080/coal/";
-    public static final String BASE_URI = "http://localhost:8080/coal/";
+	public static final String BASE_URI = "http://0.0.0.0:8080/coal/";
+    //public static final String BASE_URI = "http://localhost:8080/coal/";
     private static final int THREADS = 20;
 
 	public static HttpServer startServer() {

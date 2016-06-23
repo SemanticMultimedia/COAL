@@ -40,8 +40,8 @@ public class Enqueuer {
 
                     String QUEUE_NAME = sleepingWorker.toString();
                     ConnectionFactory factory = new ConnectionFactory();
-                    //factory.setHost(System.getenv().get("RABBIT_HOST"));
-                    factory.setHost("localhost");
+                    factory.setHost(System.getenv().get("RABBIT_HOST"));
+                    //factory.setHost("localhost");
                     Connection connection = factory.newConnection();
                     Channel channel = connection.createChannel();
                     channel.queueDeclare(QUEUE_NAME, true, false, false, null);

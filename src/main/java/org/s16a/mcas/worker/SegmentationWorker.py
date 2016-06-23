@@ -5,7 +5,7 @@ from pyAudioAnalysis import audioSegmentation as aS
 pathToDir = sys.argv[1]
 
 pathToWav = pathToDir + "data.wav"
-pathToSvm = "./lib/pyAudioAnalysis/data/svmSM"
+pathToSvm = "../pyAudioAnalysis/data/svmSM"
 pathToDataSegments = pathToDir + "data.segments"
 
 def getSegments(i):
