@@ -150,7 +150,8 @@ public class ResourceHandler {
 
 		// (7)
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost(System.getenv().get("RABBIT_HOST"));
+		//factory.setHost(System.getenv().get("RABBIT_HOST"));
+		factory.setHost("localhost");
 		Connection connection = factory.newConnection();
 		Channel channel = connection.createChannel();
 		channel.queueDeclare(MCAS.download.toString(), true, false, false, null);

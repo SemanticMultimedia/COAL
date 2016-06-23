@@ -1,7 +1,9 @@
 package org.s16a.mcas.worker;
 
+import com.hp.hpl.jena.rdf.model.Property;
 import com.rabbitmq.client.*;
 import org.s16a.mcas.Cache;
+import org.s16a.mcas.Enqueuer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +11,7 @@ import java.io.InputStreamReader;
 
 abstract class PythonWorker {
 
-    public static void executePythonWorker (String taskQueueName, final String pathToPythonWorker, final String successMessage) throws Exception, IOException {
+    public static void executePythonWorker (final Property taskQueueName, final String pathToPythonWorker, final String successMessage) throws Exception, IOException {
         ConnectionFactory factory = new ConnectionFactory();
 //        factory.setHost(System.getenv().get("RABBIT_HOST"));
         factory.setHost("localhost");
@@ -17,7 +19,7 @@ abstract class PythonWorker {
         final Connection connection = factory.newConnection();
         final Channel channel = connection.createChannel();
 
-        channel.queueDeclare(taskQueueName, true, false, false, null);
+        channel.queueDeclare(taskQueueName.toString(), true, false, false, null);
         System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
         channel.basicQos(1);
@@ -43,10 +45,15 @@ abstract class PythonWorker {
 
                     if (lastLine.equals("0")) {
                         System.out.println("[x] " + successMessage);
+                        Enqueuer.workerFinished(taskQueueName, cache);
                     } else {
                         System.out.println("[E] SOMETHING WENT WRONG");
+
                     }
-                } finally {
+                } catch (Exception e) {
+                        System.out.println(e.toString());
+                }
+                finally {
                     System.out.println(" [x] DONE");
                     channel.basicAck(envelope.getDeliveryTag(), false);
                 }
@@ -54,7 +61,7 @@ abstract class PythonWorker {
             }
         };
 
-        channel.basicConsume(taskQueueName, false, consumer);
+        channel.basicConsume(taskQueueName.toString(), false, consumer);
     }
 
 }

@@ -27,6 +27,7 @@ public class DownloadWorker implements Runnable {
 	public void run () {
 
         try {
+			System.out.println("[x] Executing Download worker");
             executeWorker();
 		} catch (Exception e) {
             System.out.println(e.toString());
