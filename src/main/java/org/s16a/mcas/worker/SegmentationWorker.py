@@ -64,11 +64,17 @@ def cut_segments(segments):
         try:
             b_sec = i[0]*1000
             e_sec = b_sec + 5000
-            while e_sec < i[1]*1000:
+            while e_sec <= i[1]*1000:
                 fname = str(b_sec/1000) + "-" + str(e_sec/1000) + "_speech.wav"
                 slice(wave.open(pathToWav, "r"), pathToDir + fname, b_sec, e_sec) 
                 b_sec = e_sec
                 e_sec += 5000
+            
+            #Add segments < 5 sec at the end
+            #e_sec = i[1]*1000
+            #fname = str(b_sec/1000) + "-" + str(e_sec/1000) + "_speech.wav"
+            #slice(wave.open(pathToWav, "r"), pathToDir + fname, b_sec, e_sec) 
+
         except Exception, e:
             if "position not in range" in str(e):
                 pass

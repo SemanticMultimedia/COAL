@@ -1,14 +1,10 @@
-#!/usr/bin/env python3
-
 import speech_recognition as sr
 import sys
-# obtain path to "english.wav" in the same folder as this script
 import os
 
 def getDigit(s):
     return int(s[:s.index("-")])
 
-# use the audio file as the audio source
 r = sr.Recognizer()
 
 segments = []
