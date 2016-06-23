@@ -21,12 +21,24 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
-public class MediainfoWorker {
+public class MediainfoWorker implements Runnable{
+
 	private static final String TASK_QUEUE_NAME = MCAS.mediainfo.toString();
 
-	public static void main(String[] argv) throws Exception {
+	public void run () {
+
+		try {
+			executeWorker();
+		} catch (Exception e) {
+			System.out.println(e.toString());
+		}
+
+	}
+	public static void executeWorker() throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost(System.getenv().get("RABBIT_HOST"));
+//		factory.setHost(System.getenv().get("RABBIT_HOST"));
+        factory.setHost("localhost");
+
 		final Connection connection = factory.newConnection();
 		final Channel channel = connection.createChannel();
 
@@ -34,8 +46,6 @@ public class MediainfoWorker {
 		System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
 		channel.basicQos(1);
-
-
 
 		final Consumer consumer = new DefaultConsumer(channel) {
 			@Override

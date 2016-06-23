@@ -21,12 +21,24 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import org.s16a.mcas.MCAS;
 
-public class DownloadWorker {
+public class DownloadWorker implements Runnable {
 	private static final String TASK_QUEUE_NAME = MCAS.download.toString();
 
-	public static void main(String[] argv) throws Exception {
+	public void run () {
+
+        try {
+            executeWorker();
+		} catch (Exception e) {
+            System.out.println(e.toString());
+		}
+
+	}
+
+	public static void executeWorker() throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost(System.getenv().get("RABBIT_HOST"));
+//		factory.setHost(System.getenv().get("RABBIT_HOST"));
+        factory.setHost("localhost");
+
 		final Connection connection = factory.newConnection();
 		final Channel channel = connection.createChannel();
 
@@ -45,7 +57,7 @@ public class DownloadWorker {
 					downloadAndUpdateModel(message);
 				} finally {
 					System.out.println(" [x] Done");
-					channel.basicAck(envelope.getDeliveryTag(), false);					
+					channel.basicAck(envelope.getDeliveryTag(), false);
 				}
 			}
 		};
@@ -95,7 +107,7 @@ public class DownloadWorker {
 	}
 	
 	
-	public static void saveUrl(final String filename, final String urlString)
+	private static void saveUrl(final String filename, final String urlString)
 	        throws MalformedURLException, IOException {
 	    BufferedInputStream in = null;
 	    FileOutputStream fout = null;
