@@ -59,6 +59,9 @@ WORKDIR /knowmin
 RUN git clone https://github.com/boeckhoff/pyAudioAnalysis.git
 RUN export PYTHONPATH=$PYTHONPATH:$(pwd)
 
+# Mediainfo
+RUN apt-get install -y libmediainfo-dev
+
 # Pythonpath
 RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin/COAL/lib"" >> /root/.bashrc
 
