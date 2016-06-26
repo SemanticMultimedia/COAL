@@ -6,10 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Savepoint;
 
 import org.s16a.mcas.Enqueuer;
-import org.s16a.mcas.Hasher;
+import org.s16a.mcas.Cache;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -20,13 +19,27 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import org.s16a.mcas.MCAS;
 
-public class DownloadWorker {
-	private static final String TASK_QUEUE_NAME = "download";
+public class DownloadWorker implements Runnable {
+	private static final String TASK_QUEUE_NAME = MCAS.download.toString();
 
-	public static void main(String[] argv) throws Exception {
+	public void run () {
+
+        try {
+			System.out.println("[x] Executing Download worker");
+            executeWorker();
+		} catch (Exception e) {
+            System.out.println(e.toString());
+		}
+
+	}
+
+	public static void executeWorker() throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("localhost");
+//		factory.setHost(System.getenv().get("RABBIT_HOST"));
+        factory.setHost("localhost");
+
 		final Connection connection = factory.newConnection();
 		final Channel channel = connection.createChannel();
 
@@ -45,43 +58,57 @@ public class DownloadWorker {
 					downloadAndUpdateModel(message);
 				} finally {
 					System.out.println(" [x] Done");
-					channel.basicAck(envelope.getDeliveryTag(), false);					
+					channel.basicAck(envelope.getDeliveryTag(), false);
 				}
 			}
 		};
 		channel.basicConsume(TASK_QUEUE_NAME, false, consumer);
 	}
 
-	private static void downloadAndUpdateModel(String message) {
+	private static void downloadAndUpdateModel(String url) {
 		// open model
+		Cache cache = new Cache(url);
+
 		Model model = ModelFactory.createDefaultModel();
-		String modelFileName = Hasher.getCacheFilename(message); 
-		File f = new File(modelFileName);
-		
-		if (f.exists()) {
+		String modelFileName = cache.getFilePath("data.ttl");
+
+		File modelFile = new File(modelFileName);
+		File dataFile = new File(url);
+
+		if (modelFile.exists()) {
 			model.read(modelFileName);
 		}
-		
-		String dataFileName = Hasher.getCacheFilename(message) + ".data";
-		
+
+		String dataFileExtension = getFileExtension(dataFile);
+		String dataFileName = cache.getFilePath("data." + dataFileExtension);
+
 		try {
-			saveUrl(dataFileName, message);
+			saveUrl(dataFileName, url);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		try {
-			Enqueuer.enqueueAfterDownload(model, message, modelFileName, dataFileName);
+			Enqueuer.workerFinished(MCAS.download, cache);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
+	}
+
+	private static String getFileExtension(File file) {
+		String name = file.getName();
+		try {
+			return name.substring(name.lastIndexOf(".") + 1);
+		} catch (Exception e) {
+			return "";
+		}
 	}
 	
 	
-	public static void saveUrl(final String filename, final String urlString)
+	private static void saveUrl(final String filename, final String urlString)
 	        throws MalformedURLException, IOException {
 	    BufferedInputStream in = null;
 	    FileOutputStream fout = null;

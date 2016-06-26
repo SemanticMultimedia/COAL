@@ -23,18 +23,9 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.validator.routines.UrlValidator;
 
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.AnonId;
-import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.RDFVisitor;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.vocabulary.DC;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.rabbitmq.client.Channel;
@@ -46,37 +37,59 @@ import com.rabbitmq.client.MessageProperties;
  * Root resource (exposed at "resource" path)
  */
 @Path("resource")
-public class MyResource {
+public class ResourceHandler {
 
-
+	/**
+	 * use "text/turtle" for TURTLE
+	 * deprecated: "application/x-turtle"
+	 **/
 	@GET
-	@Produces({ "application/x-turtle" })
-	public String getTurtle(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws IOException, TimeoutException, MCASException {
+	@Produces({ "text/turtle", "application/x-turtle" })
+	public String getTurtle(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws MCASException, IOException, TimeoutException {
 		Model model = getModel(resourceUrl, acceptParam);
 		StringWriter out = new StringWriter();
 		model.write(out, "TURTLE");
 		return out.toString();
 	}
 
+	/**
+	 * use "application/n-triples" for N-TRIPLES
+	 * deprecated: "application/x-n3" and "application/x-ntriples"
+	 **/
 	@GET
-	@Produces({ "application/x-n3", "application/x-ntriples" })
-	public String getN3(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws IOException, TimeoutException, MCASException {
+	@Produces({ "application/n-triples", "application/x-n3", "application/x-ntriples" })
+	public String getNTriples(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws MCASException, IOException, TimeoutException {
 		Model model = getModel(resourceUrl, acceptParam);
 		StringWriter out = new StringWriter();
-		model.write(out, "NT");
+		model.write(out, "NTRIPLES");
 		return out.toString();
 	}
 
+	/**
+	 * use "application/ld+json" for JSON-LD
+	 **/
+	@GET
+	@Produces({ "application/ld+json" })
+	public String getJsonLD(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws MCASException, IOException, TimeoutException {
+		Model model = getModel(resourceUrl, acceptParam);
+		StringWriter out = new StringWriter();
+		model.write(out, "JSONLD");
+		return out.toString();
+	}
+
+	/**
+	 * default ?
+	 **/
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getIt(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws IOException, TimeoutException, MCASException {
+	public String getIt(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws MCASException, IOException, TimeoutException {
 		Model model = getModel(resourceUrl, acceptParam);
 		StringWriter out = new StringWriter();
 		model.write(out, "TURTLE");
 		return out.toString();
 	}
 
-	private Model getModel(String resourceUrl, String acceptParam) throws MalformedURLException, IOException, MCASException, TimeoutException {
+	private Model getModel(String resourceUrl, String acceptParam) throws MCASException, IOException, TimeoutException {
 		// (1) check url validity
 		// (2) check return format
 		// (3) create hash
@@ -90,7 +103,7 @@ public class MyResource {
 		// (1)
 		UrlValidator urlValidator = new UrlValidator();
 		if (!urlValidator.isValid(resourceUrl)) {
-			throw new MCASException("URL is not valid");
+			throw new MCASException("URL is not valid: " + resourceUrl);
 		}
 
 		// (2)
@@ -100,7 +113,8 @@ public class MyResource {
 		}
 
 		// (3)
-		String filename = Hasher.getCacheFilename(resourceUrl);
+		Cache cache = new Cache(resourceUrl);
+		String filename = cache.getFilePath("data.ttl");
 
 		// (4)
 		File f = new File(filename);
@@ -116,17 +130,18 @@ public class MyResource {
 
 		// get URLs headers
 		Map<String, List<String>> map = conn.getHeaderFields();
-		int MAX_CONTENT_LENGTH = 50000000; // ca. 50MB
-		Set<String> VALID_CONTENT_TYPES = new HashSet<String>(Arrays.asList("image/jpeg", "image/png"));
+		int MAX_CONTENT_LENGTH = 500000000; // ca. 500MB
+		Set<String> VALID_CONTENT_TYPES = new HashSet<String>(Arrays.asList("image/jpeg", "image/png", "audio/x-mpeg-3", "audio/mpeg3", "audio/x-mpeg", "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/vnd.wave"));
 
-		// TODO: this is just an example to accept jpeg images only
 		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
 		String contentType = map.get("Content-Type").get(0);
 
 		if (contentLength > MAX_CONTENT_LENGTH) {
+			System.out.println("file too huge");
 			throw new MCASException("content length exceeded");
 		}
 		if (!VALID_CONTENT_TYPES.contains(contentType)) {
+			System.out.println("invalid  content type");
 			throw new MCASException("content type invalid");
 		}
 
@@ -134,17 +149,20 @@ public class MyResource {
 		Model model = createAndStoreBasicModel(url, filename, map);
 
 		// (7)
-
-		String QUEUE_NAME = "download";
-
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("localhost");
+		factory.setHost(System.getenv().get("RABBIT_HOST"));
+		//factory.setHost("localhost");
 		Connection connection = factory.newConnection();
 		Channel channel = connection.createChannel();
-		channel.queueDeclare(QUEUE_NAME, true, false, false, null);
-		String message = resourceUrl;
-		channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
-		//System.out.println(" [x] Sent '" + message + "'");
+		channel.queueDeclare(MCAS.download.toString(), true, false, false, null);
+
+        System.out.println(" [>] Channel '" + channel + "'");
+
+        String message = resourceUrl;
+		channel.basicPublish("", MCAS.download.toString(), MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+
+		System.out.println(" [x] Sent '" + message + "'");
+
 		channel.close();
 		connection.close();
 		
@@ -157,20 +175,22 @@ public class MyResource {
 
 		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
 		String contentType = map.get("Content-Type").get(0);
-		
-		someResource.addProperty(DC.identifier, filename);
+        String lastModified = map.get("Last-Modified").get(0);
+
+        someResource.addProperty(DC.identifier, filename);
 		someResource.addLiteral(DC.format, contentType);
-		someResource.addLiteral(DCTerms.extent, contentLength);
-		// TODO: put more info from Header into RDF
-		
+        someResource.addLiteral(DCTerms.extent, contentLength);
+		someResource.addLiteral(DCTerms.modified, lastModified);
+
 		FileWriter out = new FileWriter(filename);
+
 		try {
 			model.write(out, "TURTLE");
 		} finally {
 			try {
 				out.close();
 			} catch (IOException closeException) {
-				// ignore
+				System.out.println(closeException.getMessage());
 			}
 		}
 
@@ -178,7 +198,7 @@ public class MyResource {
 	}
 
 	private boolean checkAcceptParam(String acceptParam) {
-		// TODO Auto-generated method stub
+
 		return true;
 	}
 }
