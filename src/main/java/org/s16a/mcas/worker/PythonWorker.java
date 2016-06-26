@@ -44,10 +44,10 @@ abstract class PythonWorker {
                     }
 
                     if (lastLine.equals("0")) {
-                        System.out.println("[x] " + successMessage);
+                        System.out.println(" [x] " + successMessage);
                         Enqueuer.workerFinished(taskQueueName, cache);
                     } else {
-                        System.out.println("[E] SOMETHING WENT WRONG");
+                        System.out.println(" [E] SOMETHING WENT WRONG IN " + taskQueueName.toString().toUpperCase());
 
                     }
                 } catch (Exception e) {
