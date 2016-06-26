@@ -14,8 +14,10 @@ web media content analysis framework
 #### build docker-image (you need to be in /COAL/docker directory)
 - docker build -t boeckhoff/knowmin .
 
-#### run docker-image
-- docker run -v [PATH_TO_COAL_DIRECTORY_NO_SLASH]:/knowmin/COAL -t -i -p 8080:8080 boeckhoff/knowmin ./bash/startup.sh
+#### run docker-image (you need to be in /COAL/docker directory)
+- docker run -v $(pwd):/knowmin/COAL -t -i -p 8080:8080 boeckhoff/knowmin ./bash/startup.sh
+
+- [fast](https://github.com/chanezon/docker-tips/blob/master/java-build-mount-maven-repo.md) docker run -v ~/.m2:/root/.m2 -v $(pwd):/knowmin/COAL -t -i -p 8080:8080 boeckhoff/knowmin ./bash/startup.sh
 
 ### How to use
 - call the following command in your terminal (not in docker container)
