@@ -125,6 +125,9 @@ public class MediainfoWorker implements Runnable{
 		// open model
 		Model model = ModelFactory.createDefaultModel();
 		String modelFileName = cache.getFilePath("data.ttl");
+		String COAL_SERVER_URI = "http://coal.s16a.org/resource";
+		String MEDIA_URI = cache.getUrl();
+
 		File f = new File(modelFileName);
 
 		if (f.exists()) {
@@ -155,7 +158,7 @@ public class MediainfoWorker implements Runnable{
 		String streamSize = info.get(MediaInfo.StreamKind.Audio, 0, "StreamSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 
 
-		Resource r = model.createResource();
+		Resource r = model.createResource(cache.getUrl());
 
 		r.addLiteral(model.createProperty("fileSize"), fileSize);
 		r.addLiteral(model.createProperty("fileExtension"), fileExtension);

@@ -21,6 +21,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import com.hp.hpl.jena.vocabulary.VCARD;
 import org.apache.commons.validator.routines.UrlValidator;
 
 import com.hp.hpl.jena.rdf.model.Model;

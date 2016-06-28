@@ -21,7 +21,7 @@ docker build -t boeckhoff/knowmin .
 ```
 
 #### run docker-image
-- you need to be in /COAL/docker directory
+- you need to be in /COAL directory
 ```
 docker run -v $(pwd):/knowmin/COAL -t -i -p 8080:8080 boeckhoff/knowmin ./bash/startup.sh
 ```
