@@ -1,7 +1,18 @@
 #!/bin/bash
 
-mvn clean install -DskipTests=true
+#Start RabbitMQ
 rabbitmq-server -detached
+
+#Build coal project
+mvn clean install -DskipTests=true
+
+#Add rabbit user (RabbitMQ must be started successfully)
+rabbitmqctl add_user coal coal
+rabbitmqctl set_user_tags coal administrator
+rabbitmqctl set_permissions -p / coal ".*" ".*" ".*"
+
+#Start COAL server
 mvn exec:java
-#java -jar target/org.s16a.mcas-1.0-SNAPSHOT.jar
+
+#Return to bash
 bash

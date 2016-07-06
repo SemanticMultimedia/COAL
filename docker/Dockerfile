@@ -38,6 +38,9 @@ WORKDIR /knowmin
 
 # RabbitMQ
 RUN apt-get install -y rabbitmq-server
+RUN rabbitmq-plugins enable rabbitmq_management
+RUN service rabbitmq-server restart
+ENV RABBIT_HOST $RABBIT_PORT_4369_TCP_ADDR
 
 # Audio Converter
 RUN apt-get install -y libav-tools
@@ -53,9 +56,12 @@ RUN apt-get install -y libmediainfo-dev
 # Pythonpath
 RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin"" >> /root/.bashrc
 
-ENV RABBIT_HOST $RABBIT_PORT_4369_TCP_ADDR
+
 
 RUN mkdir COAL
 WORKDIR /knowmin/COAL
 
+# Expose ports.
+EXPOSE 5672
+EXPOSE 15672
 EXPOSE 8080
