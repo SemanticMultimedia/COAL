@@ -27,7 +27,8 @@ RUN pip install --upgrade pip
 RUN pip install scikit-learn==0.16.1
 RUN pip install scikits.talkbox
 RUN pip install simplejson
-RUN pip install SpeechRecognition
+RUN pip install -Iv https://pypi.python.org/packages/source/S/SpeechRecognition/SpeechRecognition-2.1.3.tar.gz
+
 
 RUN wget http://sourceforge.net/projects/mlpy/files/mlpy%203.5.0/mlpy-3.5.0.tar.gz 
 RUN tar xvf mlpy-3.5.0.tar.gz
@@ -55,8 +56,6 @@ RUN apt-get install -y libmediainfo-dev
 
 # Pythonpath
 RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin"" >> /root/.bashrc
-
-
 
 RUN mkdir COAL
 WORKDIR /knowmin/COAL
