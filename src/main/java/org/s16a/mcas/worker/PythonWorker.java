@@ -38,8 +38,14 @@ abstract class PythonWorker {
                     BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
                     String line;
+                    String printedText = "";
                     String lastLine = "";
                     while ((line = in.readLine()) != null) {
+                        if(!line.equals("0")) {
+                            line = " [E] " + line;
+                        }
+
+                        printedText = printedText + line + "\n";
                         lastLine = line;
                     }
 
@@ -48,13 +54,15 @@ abstract class PythonWorker {
                         Enqueuer.workerFinished(taskQueueName, cache);
                     } else {
                         System.out.println(" [E] SOMETHING WENT WRONG IN " + taskQueueName.toString().toUpperCase());
-
+                        System.out.println(" [E] ########### Python traceback ############ ");
+                        System.out.print(printedText);
+                        System.out.println(" [E] #########################################");
                     }
                 } catch (Exception e) {
                         System.out.println(e.toString());
                 }
                 finally {
-                    System.out.println(" [x] DONE");
+                    System.out.println(" [x] " + taskQueueName.toString().toUpperCase() + " Done");
                     channel.basicAck(envelope.getDeliveryTag(), false);
                 }
 
