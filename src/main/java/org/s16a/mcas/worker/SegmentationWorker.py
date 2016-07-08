@@ -1,6 +1,7 @@
 import sys, os
 import wave
 from pyAudioAnalysis import audioSegmentation as aS
+from PythonWorkerWrapper import PythonWorker
 
 pathToDir = sys.argv[1]
 
@@ -91,8 +92,7 @@ def cut_segments(segments):
             else:
                 print(str(e))
 
-
-if __name__ == "__main__":
+def func():
     res = [flagsInd, classesAll, acc] = aS.mtFileClassification(pathToWav, pathToSvm, "svm", False, pathToDataSegments) 
     print res
     segments = getSegments(res[0])
@@ -100,5 +100,7 @@ if __name__ == "__main__":
     f = open(pathToDir + "segments", "w")
     f.write(str(segments))
     cut_segments(segments)
-    #slice(wave.open("onetwothree.wav", "r"), "out.wav", 500, 3000)
-    print("0")
+
+if __name__ == "__main__":
+    worker = PythonWorker(func)
+    worker.run()

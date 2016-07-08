@@ -1,11 +1,15 @@
 import sys, os
+from PythonWorkerWrapper import PythonWorker
 from pyAudioAnalysis import audioBasicIO
 
-FS = 16000 # sampling rate of generated WAV files
-NC = 1     # number of channels of generated WAV files
+def func():
 
-dirName = sys.argv[1]
-audioBasicIO.convertDirMP3ToWav(dirName, FS, NC, useMp3TagsAsName = False)
+	FS = 16000 # sampling rate of generated WAV files
+	NC = 1     # number of channels of generated WAV files
 
-#return 0 if no errors occured
-print('0')
+	dirName = sys.argv[1]
+	audioBasicIO.convertDirMP3ToWav(dirName, FS, NC, useMp3TagsAsName = False)
+
+if __name__ == "__main__":
+	worker = PythonWorker(func)
+	worker.run()
