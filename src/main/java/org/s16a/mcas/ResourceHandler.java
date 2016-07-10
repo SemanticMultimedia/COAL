@@ -177,6 +177,7 @@ public class ResourceHandler {
 		Model model = ModelFactory.createDefaultModel();
 
 		Map<String, String> nsPrefixes = new HashMap<>();
+        nsPrefixes.put("coal", MCAS.NS);
 		String foaf = "http://xmlns.com/foaf/0.1/";
 		nsPrefixes.put("foaf", foaf);
 		String dc = "http://purl.org/dc/elements/1.1/";
@@ -189,14 +190,14 @@ public class ResourceHandler {
 
 
 		Resource rdfDocument = model.createResource(COAL_SERVER_URI + "?url=" + MEDIA_URI);
-		rdfDocument.addProperty(RDF.type, foaf + "Document");
+		rdfDocument.addProperty(RDF.type, model.createResource(foaf + "Document"));
         Property topic = model.createProperty(foaf + "topic");
 		rdfDocument.addLiteral(topic, MEDIA_URI);
-		rdfDocument.addProperty(model.createProperty(foaf + "maker"), "COAL");
-		rdfDocument.addProperty(DC.identifier, filename);
+		rdfDocument.addLiteral(model.createProperty(foaf + "maker"), "COAL");
+		rdfDocument.addLiteral(DC.identifier, filename);
 
         Resource file = model.createResource(MEDIA_URI);
-        int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
+        Integer contentLength = Integer.parseInt(map.get("Content-Length").get(0));
         String contentType = map.get("Content-Type").get(0);
         String lastModified = map.get("Last-Modified").get(0);
         file.addLiteral(DC.format, contentType);
