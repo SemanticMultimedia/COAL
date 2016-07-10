@@ -6,7 +6,6 @@ target/*
 .idea/*
 org.s16a.mcas.iml
 curl_request.sh
-
+src/main/java/org/s16a/mcas/worker/PythonWorkerWrapper.pyc
 target/surefire-reports/org.s16a.mcas.MediainfoTest.txt
-
 target/surefire-reports/TEST-org.s16a.mcas.MediainfoTest.xml
