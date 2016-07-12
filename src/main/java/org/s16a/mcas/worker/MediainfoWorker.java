@@ -36,8 +36,7 @@ public class MediainfoWorker implements Runnable{
 	}
 	public static void executeWorker() throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
-//		factory.setHost(System.getenv().get("RABBIT_HOST"));
-        factory.setHost("localhost");
+		factory.setHost(System.getenv().get("RABBIT_HOST"));
 
 		final Connection connection = factory.newConnection();
 		final Channel channel = connection.createChannel();
@@ -125,7 +124,6 @@ public class MediainfoWorker implements Runnable{
 		// open model
 		Model model = ModelFactory.createDefaultModel();
 		String modelFileName = cache.getFilePath("data.ttl");
-		String COAL_SERVER_URI = "http://coal.s16a.org/resource";
 		String MEDIA_URI = cache.getUrl();
 
 		File f = new File(modelFileName);
@@ -140,48 +138,49 @@ public class MediainfoWorker implements Runnable{
 		info.open(new File(dataFileName));
 
 		String fileExtension = info.get(MediaInfo.StreamKind.General, 0, "FileExtension", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
-		String fileSize = info.get(MediaInfo.StreamKind.General, 0, "FileSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
-
+		Long fileSize = Long.parseLong(info.get(MediaInfo.StreamKind.General, 0, "FileSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
 		String format = info.get(MediaInfo.StreamKind.Audio, 0, "Format", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 		String formatVersion = info.get(MediaInfo.StreamKind.Audio, 0, "Format_Version", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 		String formatProfile = info.get(MediaInfo.StreamKind.Audio, 0, "Format_Profile", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 		String codecId = info.get(MediaInfo.StreamKind.Audio, 0, "CodecID", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
-
-		String duration = info.get(MediaInfo.StreamKind.Audio, 0, "Duration", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		Long duration = Long.parseLong(info.get(MediaInfo.StreamKind.Audio, 0, "Duration", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
 		String bitRateMode = info.get(MediaInfo.StreamKind.Audio, 0, "BitRate_Mode", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
-		String bitRate = info.get(MediaInfo.StreamKind.Audio, 0, "BitRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
-
-		String channels = info.get(MediaInfo.StreamKind.Audio, 0, "Channels", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		Integer bitRate = Integer.parseInt(info.get(MediaInfo.StreamKind.Audio, 0, "BitRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
+		Integer channels = Integer.parseInt(info.get(MediaInfo.StreamKind.Audio, 0, "Channels", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
 		String channelPositions = info.get(MediaInfo.StreamKind.Audio, 0, "ChannelPositions", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		Integer samplingRate = Integer.parseInt(info.get(MediaInfo.StreamKind.Audio, 0, "SamplingRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
+		Long streamSize = Long.parseLong(info.get(MediaInfo.StreamKind.Audio, 0, "StreamSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
 
-		String samplingRate = info.get(MediaInfo.StreamKind.Audio, 0, "SamplingRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
-		String streamSize = info.get(MediaInfo.StreamKind.Audio, 0, "StreamSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 
+		Resource r = model.createResource();
+		String nfo = "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo/#";
+		model.setNsPrefix("nfo", nfo);
+		String nie = "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo/#";
+		model.setNsPrefix("nie", nie);
+		String dbo = "http://dbpedia.org/ontology/";
+		model.setNsPrefix("dbo", dbo);
+        String ebu = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
+        model.setNsPrefix("ebu", ebu);
 
-		Resource r = model.createResource(cache.getUrl());
-
-		r.addLiteral(model.createProperty("fileSize"), fileSize);
-		r.addLiteral(model.createProperty("fileExtension"), fileExtension);
+		r.addLiteral(model.createProperty(nfo + "fileSize"), fileSize);
+		r.addLiteral(model.createProperty(dbo + "fileExtension"), fileExtension);
 
 		r.addLiteral(model.createProperty("format"), format);
 		r.addLiteral(model.createProperty("formatVersion"), formatVersion);
 		r.addLiteral(model.createProperty("formatProfile"), formatProfile);
 		r.addLiteral(model.createProperty("codecId"), codecId);
 
-		r.addLiteral(model.createProperty("duration"), duration);
+		r.addLiteral(model.createProperty(nfo + "duration"), duration);
+		r.addLiteral(model.createProperty(nfo + "averageBitrate"), bitRate);
+		r.addLiteral(model.createProperty(nfo + "bitRateMode"), bitRateMode);
 
-		r.addLiteral(model.createProperty("bitrate"), bitRate);
-		r.addLiteral(model.createProperty("bitRateMode"), bitRateMode);
-
-		r.addLiteral(model.createProperty("channels"), channels);
+		r.addLiteral(model.createProperty(ebu + "audioChannelNumber"), channels);
 		r.addLiteral(model.createProperty("channelPositions"), channelPositions);
 
-		r.addLiteral(model.createProperty("samplingRate"), samplingRate);
+		r.addLiteral(model.createProperty(nfo + "sampleRate"), samplingRate);
 		r.addLiteral(model.createProperty("streamSize"), streamSize);
 
-
-		model.getResource(url).addProperty(MCAS.mediainfo, r);
-		System.out.println(model.getResource(url).addProperty(MCAS.mediainfo, r));
+        model.getResource(url).addProperty(MCAS.mediainfo, r);
 		FileWriter out = new FileWriter(modelFileName);
 
 		printTurtle(model, out, cache);
