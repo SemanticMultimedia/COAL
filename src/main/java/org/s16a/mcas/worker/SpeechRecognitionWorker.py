@@ -1,29 +1,26 @@
 from PythonWorkerWrapper import PythonWorker
+from Segmentation import *
 import speech_recognition as sr
 import sys
 import os
+import ast
 
-def getDigit(s):
-    return int(s[:s.index("-")])
+PATH_TO_DIR = sys.argv[1]
+r = sr.Recognizer()
 
-def func():
-    r = sr.Recognizer()
+def fileNameForSegment(segment):
+    return PATH_TO_DIR + "/" + str(segment[0]) + "-" + str(segment[1]) + "_speech.wav"
 
-    segments = []
 
-    print(sys.argv[1])
+def textFileNameForSegment(segment):
+    return PATH_TO_DIR + "/" + str(segment[0]) + "-" + str(segment[1]) + "_text"
 
-    for i in os.listdir(sys.argv[1]):
-        if i.endswith("speech.wav"): 
-            segments.append(i)
-            continue
 
-    segments.sort(key=lambda x: getDigit(x))
-
-    for i in segments:
-
-        with sr.WavFile(sys.argv[1] + i) as source:
-            audio = r.record(source) #AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw
+def recognizeForSegment(segment):
+    parts = sliceSegmentIntoParts(fileNameForSegment(segment))
+    for fileName in parts:
+        with sr.WavFile(fileName) as source:
+            audio = r.record(source)
 
             try:
                 txt = r.recognize(audio)
@@ -32,14 +29,22 @@ def func():
                 pass
 
             try:
-                with open(sys.argv[1] + "/text", "a") as myfile: 
-                    myfile.write(txt + "\n")
-                myfile.close()
+                with open(textFileNameForSegment(segment), "a") as textFile: 
+                    textFile.write(txt + "\n")
+                textFile.close()
             except sr.UnknownValueError:
                 pass
             except sr.RequestError as e:
                 pass
 
-if __name__ == "__main__":
-    worker = PythonWorker(func)
-    worker.run()
+
+def func():
+    segments = ast.literal_eval(open(PATH_TO_DIR + "/segments", "r").readline())
+    speechSegments = segments[0]
+
+    for s in speechSegments:
+        recognizeForSegment(s)
+
+
+worker = PythonWorker(func)
+worker.run()
