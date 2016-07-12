@@ -1,8 +1,8 @@
-import sys, os
 from PythonWorkerWrapper import PythonWorker
-from pyAudioAnalysis import audioBasicIO
 
 def func():
+	import sys, os
+	from pyAudioAnalysis import audioBasicIO
 
 	FS = 16000 # sampling rate of generated WAV files
 	NC = 1     # number of channels of generated WAV files
