@@ -7,11 +7,7 @@ import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 import javax.ws.rs.GET;
@@ -21,14 +17,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import com.hp.hpl.jena.vocabulary.VCARD;
 import org.apache.commons.validator.routines.UrlValidator;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.vocabulary.DC;
 import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.vocabulary.RDF;
+
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -152,7 +150,9 @@ public class ResourceHandler {
 		// (7)
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost(System.getenv().get("RABBIT_HOST"));
-		//factory.setHost("localhost");
+        factory.setUsername("coal");
+        factory.setPassword("coal");
+
 		Connection connection = factory.newConnection();
 		Channel channel = connection.createChannel();
 		channel.queueDeclare(MCAS.download.toString(), true, false, false, null);
@@ -171,17 +171,38 @@ public class ResourceHandler {
 	}
 
 	private Model createAndStoreBasicModel(URL url, String filename, Map<String, List<String>> map) throws IOException {
+
+		String COAL_SERVER_URI = "http://coal.s16a.org/resource";
+		String MEDIA_URI = url.toString();
 		Model model = ModelFactory.createDefaultModel();
-		Resource someResource = model.createResource(url.toString());
 
-		int contentLength = Integer.parseInt(map.get("Content-Length").get(0));
-		String contentType = map.get("Content-Type").get(0);
+		Map<String, String> nsPrefixes = new HashMap<>();
+        nsPrefixes.put("coal", MCAS.NS);
+		String foaf = "http://xmlns.com/foaf/0.1/";
+		nsPrefixes.put("foaf", foaf);
+		String dc = "http://purl.org/dc/elements/1.1/";
+		nsPrefixes.put("dc", dc);
+		String dcterms = "http://purl.org/dc/terms/";
+		nsPrefixes.put("dcterms", dcterms);
+        String xsd = "http://www.w3.org/2001/XMLSchema#";
+        nsPrefixes.put("xsd", xsd);
+        model.setNsPrefixes(nsPrefixes);
+
+
+		Resource rdfDocument = model.createResource(COAL_SERVER_URI + "?url=" + MEDIA_URI);
+		rdfDocument.addProperty(RDF.type, model.createResource(foaf + "Document"));
+        Property topic = model.createProperty(foaf + "topic");
+		rdfDocument.addLiteral(topic, MEDIA_URI);
+		rdfDocument.addLiteral(model.createProperty(foaf + "maker"), "COAL");
+		rdfDocument.addLiteral(DC.identifier, filename);
+
+        Resource file = model.createResource(MEDIA_URI);
+        Integer contentLength = Integer.parseInt(map.get("Content-Length").get(0));
+        String contentType = map.get("Content-Type").get(0);
         String lastModified = map.get("Last-Modified").get(0);
-
-        someResource.addProperty(DC.identifier, filename);
-		someResource.addLiteral(DC.format, contentType);
-        someResource.addLiteral(DCTerms.extent, contentLength);
-		someResource.addLiteral(DCTerms.modified, lastModified);
+        file.addLiteral(DC.format, contentType);
+        file.addLiteral(DCTerms.extent, contentLength);
+        file.addLiteral(DCTerms.modified, lastModified);
 
 		FileWriter out = new FileWriter(filename);
 
