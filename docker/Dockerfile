@@ -15,9 +15,9 @@ RUN apt-get install -y maven
 
 # Install Python dependencies
 RUN apt-get install -y \
-  python-pip \
-  python-matplotlib \
-  python-scipy \
+  python-pip \ 
+  python-matplotlib \ 
+  python-scipy \ 
   libgsl0-dev \
   python-eyed3
 
@@ -56,6 +56,11 @@ RUN apt-get install -y libmediainfo-dev
 
 # Pythonpath
 RUN echo "export PYTHONPATH=$PYTHONPATH:"/knowmin"" >> /root/.bashrc
+
+# fpcalc
+RUN wget https://bitbucket.org/acoustid/chromaprint/downloads/chromaprint-fpcalc-1.3.2-linux-x86_64.tar.gz
+RUN tar xfv chromaprint-fpcalc-1.3.2-linux-x86_64.tar.gz
+RUN echo "alias fpcalc='/knowmin/chromaprint-fpcalc-1.3.2-linux-x86_64/fpcalc'" >> /root/.bashrc
 
 RUN mkdir COAL
 WORKDIR /knowmin/COAL
