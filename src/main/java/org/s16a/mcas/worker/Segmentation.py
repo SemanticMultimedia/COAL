@@ -54,14 +54,14 @@ def sliceSegmentIntoParts(pathToFile, partDurationMS = 5000):
         fileOutName = pathToDir + str(startMS) + "-" + str(endMS) + ".wav"
         sliceWav(wave.open(pathToFile, "r"), fileOutName, startMS, endMS)
         fileNames.append(fileOutName)
-        startMS = endMS - 500 #Half a second of puffer for speechRecognition"
+        startMS = endMS - 500 #Half a second of puffer for speechRecognition
         endMS += partDurationMS
 
     #Add segment < partDurationMS at the end
-    startMS = endMS - partDurationMS
-    endMS = duration
-    fileOutName = pathToDir + str(startMS) + "-" + str(endMS) + ".wav"
-    sliceWav(wave.open(pathToFile, "r"), fileOutName, startMS, endMS)
-    fileNames.append(fileOutName)
+    if endMS != duration:
+        endMS = duration
+        fileOutName = pathToDir + str(startMS) + "-" + str(endMS) + ".wav"
+        sliceWav(wave.open(pathToFile, "r"), fileOutName, startMS, endMS)
+        fileNames.append(fileOutName)
 
     return fileNames

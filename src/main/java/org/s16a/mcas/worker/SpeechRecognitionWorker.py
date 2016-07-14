@@ -37,6 +37,8 @@ def recognizeForSegment(segment):
             except sr.RequestError as e:
                 pass
 
+        os.remove(fileName)
+
 
 def func():
     segments = ast.literal_eval(open(PATH_TO_DIR + "/segments", "r").readline())
