@@ -44,8 +44,7 @@ public class Enqueuer {
 		Map<Property, List<Property>> workerDependencies = new HashMap<Property, List<Property>>();
         workerDependencies.put(MCAS.download, Arrays.asList(MCAS.converter, MCAS.mediainfo));
         workerDependencies.put(MCAS.converter, Arrays.asList(MCAS.segments));
-        workerDependencies.put(MCAS.segments, Arrays.asList(MCAS.speech));
-        workerDependencies.put(MCAS.segments, Arrays.asList(MCAS.music));
+        workerDependencies.put(MCAS.segments, Arrays.asList(MCAS.speech, MCAS.music));
 
         Model model = ModelFactory.createDefaultModel();
         String modelFileName = cache.getFilePath("data.ttl");

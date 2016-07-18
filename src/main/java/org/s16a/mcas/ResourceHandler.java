@@ -44,7 +44,7 @@ public class ResourceHandler {
 	 **/
 	@GET
 	@Produces({ "text/turtle", "application/x-turtle" })
-	public String getTurtle(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws MCASException, IOException, TimeoutException {
+	public String getTurtle(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws Exception {
 		Model model = getModel(resourceUrl, acceptParam);
 		StringWriter out = new StringWriter();
 		model.write(out, "TURTLE");
@@ -57,7 +57,7 @@ public class ResourceHandler {
 	 **/
 	@GET
 	@Produces({ "application/n-triples", "application/x-n3", "application/x-ntriples" })
-	public String getNTriples(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws MCASException, IOException, TimeoutException {
+	public String getNTriples(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws Exception {
 		Model model = getModel(resourceUrl, acceptParam);
 		StringWriter out = new StringWriter();
 		model.write(out, "NTRIPLES");
@@ -69,7 +69,7 @@ public class ResourceHandler {
 	 **/
 	@GET
 	@Produces({ "application/ld+json" })
-	public String getJsonLD(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws MCASException, IOException, TimeoutException {
+	public String getJsonLD(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws Exception {
 		Model model = getModel(resourceUrl, acceptParam);
 		StringWriter out = new StringWriter();
 		model.write(out, "JSONLD");
@@ -81,14 +81,14 @@ public class ResourceHandler {
 	 **/
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getIt(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws MCASException, IOException, TimeoutException {
+	public String getIt(@QueryParam("url") String resourceUrl, @HeaderParam("accept") String acceptParam) throws Exception {
 		Model model = getModel(resourceUrl, acceptParam);
 		StringWriter out = new StringWriter();
 		model.write(out, "TURTLE");
 		return out.toString();
 	}
 
-	private Model getModel(String resourceUrl, String acceptParam) throws MCASException, IOException, TimeoutException {
+	private Model getModel(String resourceUrl, String acceptParam) throws Exception {
 		// (1) check url validity
 		// (2) check return format
 		// (3) create hash
@@ -148,25 +148,20 @@ public class ResourceHandler {
 		Model model = createAndStoreBasicModel(url, filename, map);
 
 		// (7)
-        try {
-            Connection connection = Enqueuer.getConnection();
-            Channel channel = Enqueuer.getChannel();
+        Connection connection = Enqueuer.getConnection();
+        Channel channel = Enqueuer.getChannel();
 
-            channel.queueDeclare(MCAS.download.toString(), true, false, false, null);
+        channel.queueDeclare(MCAS.download.toString(), true, false, false, null);
 
-            System.out.println(" [>] Channel '" + channel + "'");
+        System.out.println(" [>] Channel '" + channel + "'");
 
-            String message = resourceUrl;
-            channel.basicPublish("", MCAS.download.toString(), MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+        String message = resourceUrl;
+        channel.basicPublish("", MCAS.download.toString(), MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
 
-            System.out.println(" [x] Sent '" + message + "'");
+        System.out.println(" [x] Sent '" + message + "'");
 
-            channel.close();
-            connection.close();
-
-        } catch (Exception exception) {
-            System.out.println(exception.getMessage());
-        }
+        channel.close();
+        connection.close();
 
 		return model;
 	}

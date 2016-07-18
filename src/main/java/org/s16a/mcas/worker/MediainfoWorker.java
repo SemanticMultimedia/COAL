@@ -35,11 +35,7 @@ public class MediainfoWorker implements Runnable{
 
 	}
 	public static void executeWorker() throws Exception {
-		ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(System.getenv().get("RABBIT_HOST"));
-
-		final Connection connection = factory.newConnection();
-		final Channel channel = connection.createChannel();
+        final Channel channel = Enqueuer.getChannel();
 
 		channel.queueDeclare(TASK_QUEUE_NAME, true, false, false, null);
 		System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
