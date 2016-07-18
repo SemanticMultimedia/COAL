@@ -148,25 +148,26 @@ public class ResourceHandler {
 		Model model = createAndStoreBasicModel(url, filename, map);
 
 		// (7)
-		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost(System.getenv().get("RABBIT_HOST"));
-        factory.setUsername("coal");
-        factory.setPassword("coal");
+        try {
+            Connection connection = Enqueuer.getConnection();
+            Channel channel = Enqueuer.getChannel();
 
-		Connection connection = factory.newConnection();
-		Channel channel = connection.createChannel();
-		channel.queueDeclare(MCAS.download.toString(), true, false, false, null);
+            channel.queueDeclare(MCAS.download.toString(), true, false, false, null);
 
-        System.out.println(" [>] Channel '" + channel + "'");
+            System.out.println(" [>] Channel '" + channel + "'");
 
-        String message = resourceUrl;
-		channel.basicPublish("", MCAS.download.toString(), MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+            String message = resourceUrl;
+            channel.basicPublish("", MCAS.download.toString(), MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
 
-		System.out.println(" [x] Sent '" + message + "'");
+            System.out.println(" [x] Sent '" + message + "'");
 
-		channel.close();
-		connection.close();
-		
+            channel.close();
+            connection.close();
+
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+        }
+
 		return model;
 	}
 
