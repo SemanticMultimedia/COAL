@@ -30,7 +30,19 @@ docker run -v $(pwd):/knowmin/COAL -t -i -p 8080:8080 boeckhoff/knowmin ./bash/s
 docker run -v ~/.m2:/root/.m2 -v $(pwd):/knowmin/COAL -t -i -p 8080:8080 boeckhoff/knowmin ./bash/startup.sh
 ```
 ### How to use
-- call the following command in your terminal (not in docker container)
+- [mac] call the following commands in your terminal (not in docker container)
+```
+docker-machine ip
+curl -v -H "accept:text/turtle" "http://DOCKER-MACHINE-IP:8080/coal/resource?url=RESOURCE-URI"
+```
+
+- [else] call the following command in your terminal (not in docker container)
 ```
 curl -v -H "accept:text/turtle" "http://localhost:8080/coal/resource?url=RESOURCE-URI"
 ```
+
+# Server
+
+ssh coal@172.16.65.75 -p 23
+yes
+password

@@ -14,7 +14,8 @@ import java.net.URI;
 public class Main {
 
 	public static final String BASE_URI = "http://0.0.0.0:8080/coal/";
-    //public static final String BASE_URI = "http://localhost:8080/coal/";
+
+    // todo: number of threads dynamic
     private static final int THREADS = 20;
 
 	public static HttpServer startServer() {
@@ -49,6 +50,9 @@ public class Main {
 
         Runnable speechRecognitionWorker = new SpeechRecognitionWorker();
         executor.execute(speechRecognitionWorker);
+
+        Runnable musicRecognitionWorker = new MusicRecognitionWorker();
+        executor.execute(musicRecognitionWorker);
 
 //        executor.shutdown();
 //

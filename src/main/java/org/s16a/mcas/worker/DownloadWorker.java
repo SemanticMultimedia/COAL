@@ -37,8 +37,7 @@ public class DownloadWorker implements Runnable {
 
 	public static void executeWorker() throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
-//		factory.setHost(System.getenv().get("RABBIT_HOST"));
-        factory.setHost("localhost");
+        factory.setHost(System.getenv().get("RABBIT_HOST"));
 
 		final Connection connection = factory.newConnection();
 		final Channel channel = connection.createChannel();
@@ -51,11 +50,11 @@ public class DownloadWorker implements Runnable {
 		final Consumer consumer = new DefaultConsumer(channel) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-				String message = new String(body, "UTF-8");
+				String url = new String(body, "UTF-8");
 
-				System.out.println(" [x] Received '" + message + "'");
+				System.out.println(" [x] Received '" + url + "'");
 				try {
-					downloadAndUpdateModel(message);
+					downloadAndUpdateModel(url);
 				} finally {
 					System.out.println(" [x] Done");
 					channel.basicAck(envelope.getDeliveryTag(), false);
@@ -100,6 +99,7 @@ public class DownloadWorker implements Runnable {
 
 	private static String getFileExtension(File file) {
 		String name = file.getName();
+
 		try {
 			return name.substring(name.lastIndexOf(".") + 1);
 		} catch (Exception e) {
@@ -108,10 +108,10 @@ public class DownloadWorker implements Runnable {
 	}
 	
 	
-	private static void saveUrl(final String filename, final String urlString)
-	        throws MalformedURLException, IOException {
+	private static void saveUrl(final String filename, final String urlString) throws MalformedURLException, IOException {
 	    BufferedInputStream in = null;
 	    FileOutputStream fout = null;
+
 	    try {
 	        in = new BufferedInputStream(new URL(urlString).openStream());
 	        fout = new FileOutputStream(filename);

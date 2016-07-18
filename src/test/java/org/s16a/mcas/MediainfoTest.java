@@ -3,7 +3,7 @@ package org.s16a.mcas;
 import java.io.File;
 
 import org.junit.Test;
-import org.s16a.mcas.util.MediaInfo;
+import org.s16a.mcas.util.mediainfo.MediaInfo;
 
 
 public class MediainfoTest {

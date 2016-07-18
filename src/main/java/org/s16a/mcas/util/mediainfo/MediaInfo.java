@@ -1,4 +1,4 @@
-package org.s16a.mcas.util;
+package org.s16a.mcas.util.mediainfo;
 
 import java.io.Closeable;
 import java.io.File;

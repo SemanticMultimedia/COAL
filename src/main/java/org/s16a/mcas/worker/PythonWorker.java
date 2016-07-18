@@ -14,7 +14,6 @@ abstract class PythonWorker {
     public static void executePythonWorker (final Property taskQueueName, final String pathToPythonWorker, final String successMessage) throws Exception, IOException {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(System.getenv().get("RABBIT_HOST"));
-        //factory.setHost("localhost");
 
         final Connection connection = factory.newConnection();
         final Channel channel = connection.createChannel();
@@ -34,13 +33,13 @@ abstract class PythonWorker {
                 try {
                     Cache cache = new Cache(message);
 
-                    Process p = Runtime.getRuntime().exec(pathToPythonWorker + cache.getPath());
-                    BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                    Process process = Runtime.getRuntime().exec(pathToPythonWorker + cache.getPath());
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
                     String line;
                     String printedText = "";
                     String lastLine = "";
-                    while ((line = in.readLine()) != null) {
+                    while ((line = reader.readLine()) != null) {
                         if(!line.equals("0")) {
                             line = " [E] " + line;
                         }

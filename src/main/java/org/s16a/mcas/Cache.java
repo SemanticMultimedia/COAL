@@ -19,6 +19,7 @@ public class Cache {
 	public String getCacheId(){
 		return this.hash;
 	}
+
 	public String getUrl(){
 		return this.url;
 	}
@@ -61,9 +62,11 @@ public class Cache {
 	public File getResourceFile(String fileName){
 		return new File(getResourceFilePath());
 	}
+
 	public String getResourceFilePath(){
 		return getPath() + "data." + getResourceFileExtension();
 	}
+
 	public String getResourceFileExtension(){
 		return getFileExtension(new File(this.url));
 	}

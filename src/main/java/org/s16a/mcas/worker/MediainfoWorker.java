@@ -7,7 +7,7 @@ import java.io.IOException;
 import org.s16a.mcas.Cache;
 import org.s16a.mcas.Enqueuer;
 import org.s16a.mcas.MCAS;
-import org.s16a.mcas.util.MediaInfo;
+import org.s16a.mcas.util.mediainfo.MediaInfo;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -36,7 +36,7 @@ public class MediainfoWorker implements Runnable{
 	}
 	public static void executeWorker() throws Exception {
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost(System.getenv().get("RABBIT_HOST"));
+        factory.setHost(System.getenv().get("RABBIT_HOST"));
 
 		final Connection connection = factory.newConnection();
 		final Channel channel = connection.createChannel();
@@ -124,6 +124,7 @@ public class MediainfoWorker implements Runnable{
 		// open model
 		Model model = ModelFactory.createDefaultModel();
 		String modelFileName = cache.getFilePath("data.ttl");
+		String COAL_SERVER_URI = "http://coal.s16a.org/resource";
 		String MEDIA_URI = cache.getUrl();
 
 		File f = new File(modelFileName);
