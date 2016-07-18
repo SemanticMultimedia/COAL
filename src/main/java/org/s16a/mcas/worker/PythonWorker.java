@@ -12,11 +12,7 @@ import java.io.InputStreamReader;
 abstract class PythonWorker {
 
     public static void executePythonWorker (final Property taskQueueName, final String pathToPythonWorker, final String successMessage) throws Exception, IOException {
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(System.getenv().get("RABBIT_HOST"));
-
-        final Connection connection = factory.newConnection();
-        final Channel channel = connection.createChannel();
+        final Channel channel = Enqueuer.getChannel();
 
         channel.queueDeclare(taskQueueName.toString(), true, false, false, null);
         System.out.println(" [*] Waiting for messages. To exit press CTRL+C");

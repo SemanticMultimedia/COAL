@@ -18,13 +18,33 @@ import com.rabbitmq.client.MessageProperties;
 
 public class Enqueuer {
 
+    public static ConnectionFactory getConnectionFactory() throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(System.getenv().get("RABBIT_HOST"));
+        factory.setUsername("coal");
+        factory.setPassword("coal");
+
+        return factory;
+    }
+
+    public static Connection getConnection() throws Exception {
+        ConnectionFactory factory = getConnectionFactory();
+        return factory.newConnection();
+    }
+
+    public static Channel getChannel() throws Exception {
+        Connection connection = getConnection();
+        return connection.createChannel();
+    }
+
+
+
 	public static void workerFinished(Property finishedWorker, Cache cache) throws Exception {
         /* Enter the workers and the workers which are waiting for them to complete */
 		Map<Property, List<Property>> workerDependencies = new HashMap<Property, List<Property>>();
         workerDependencies.put(MCAS.download, Arrays.asList(MCAS.converter, MCAS.mediainfo));
         workerDependencies.put(MCAS.converter, Arrays.asList(MCAS.segments));
-        workerDependencies.put(MCAS.segments, Arrays.asList(MCAS.speech));
-        workerDependencies.put(MCAS.segments, Arrays.asList(MCAS.music));
+        workerDependencies.put(MCAS.segments, Arrays.asList(MCAS.speech, MCAS.music));
 
         Model model = ModelFactory.createDefaultModel();
         String modelFileName = cache.getFilePath("data.ttl");
