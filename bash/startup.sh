@@ -1,4 +1,5 @@
 #!/bin/bash
+source /root/.bashrc
 
 #Start RabbitMQ
 rabbitmq-server -detached
