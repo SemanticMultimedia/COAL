@@ -169,17 +169,13 @@ public class MediainfoWorker implements Runnable{
 		r.addLiteral(model.createProperty("format"), format);
 		r.addLiteral(model.createProperty("formatVersion"), formatVersion);
 		r.addLiteral(model.createProperty("formatProfile"), formatProfile);
-		r.addLiteral(model.createProperty("codecId"), codecId);
 
 		r.addLiteral(model.createProperty(nfo + "duration"), duration);
 		r.addLiteral(model.createProperty(nfo + "averageBitrate"), bitRate);
 		r.addLiteral(model.createProperty(nfo + "bitRateMode"), bitRateMode);
 
 		r.addLiteral(model.createProperty(ebu + "audioChannelNumber"), channels);
-		r.addLiteral(model.createProperty("channelPositions"), channelPositions);
-
 		r.addLiteral(model.createProperty(nfo + "sampleRate"), samplingRate);
-		r.addLiteral(model.createProperty("streamSize"), streamSize);
 
         model.getResource(url).addProperty(MCAS.mediainfo, r);
 		FileWriter out = new FileWriter(modelFileName);
