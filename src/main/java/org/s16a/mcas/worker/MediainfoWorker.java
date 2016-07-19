@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDF;
 import org.s16a.mcas.Cache;
 import org.s16a.mcas.Enqueuer;
 import org.s16a.mcas.MCAS;
@@ -149,7 +151,7 @@ public class MediainfoWorker implements Runnable{
 		Long streamSize = Long.parseLong(info.get(MediaInfo.StreamKind.Audio, 0, "StreamSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
 
 
-		Resource r = model.createResource();
+		Resource r = model.getResource(url);
 		String nfo = "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo/#";
 		model.setNsPrefix("nfo", nfo);
 		String nie = "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo/#";
@@ -173,7 +175,23 @@ public class MediainfoWorker implements Runnable{
 		r.addLiteral(model.createProperty(ebu + "audioChannelNumber"), channels);
 		r.addLiteral(model.createProperty(nfo + "sampleRate"), samplingRate);
 
-        model.getResource(url).addProperty(MCAS.mediainfo, r);
+
+		String oa = "http://www.w3.org/ns/oa#";
+		model.setNsPrefix("oa", oa);
+		String nif = "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#";
+		model.setNsPrefix("nif", nif);
+		Resource segment = model.createResource(MEDIA_URI + "#t=" + "1,30");
+		segment.addProperty(DCTerms.isPartOf, MEDIA_URI);
+		segment.addProperty(RDF.type, model.createResource(nif + "Context"));
+		segment.addProperty(RDF.type, model.createResource(nif + "RFC5147String"));
+		segment.addProperty(model.createProperty(nif + "isString"), "recognizedText");
+		Resource annotation = model.createResource("#anno1");
+		annotation.addProperty(RDF.type, model.createResource(oa + "Annotation"));
+		annotation.addProperty(model.createProperty(oa + "hasTarget"), MEDIA_URI);
+		annotation.addProperty(model.createProperty(oa + "annotatedBy"), MCAS.speech);
+		annotation.addProperty(model.createProperty(oa + "hasBody"), segment);
+		annotation.addProperty(model.createProperty(oa + "motivatedBy"), model.createResource(oa + "describing"));
+
 		FileWriter out = new FileWriter(modelFileName);
 
 		printTurtle(model, out, cache);

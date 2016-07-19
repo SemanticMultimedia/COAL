@@ -24,7 +24,7 @@ public class Cache {
 		return this.url;
 	}
 
-	private static String hash(String input) {
+	public static String hash(String input) {
 		MessageDigest m = null;
 		try {
 			m = MessageDigest.getInstance("MD5");
