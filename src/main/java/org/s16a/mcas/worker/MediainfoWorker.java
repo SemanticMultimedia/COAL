@@ -4,9 +4,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.s16a.mcas.Hasher;
+import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDF;
+import org.s16a.mcas.Cache;
+import org.s16a.mcas.Enqueuer;
 import org.s16a.mcas.MCAS;
-import org.s16a.mcas.util.MediaInfo;
+import org.s16a.mcas.util.mediainfo.MediaInfo;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -20,14 +23,21 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 
-public class MediainfoWorker {
+public class MediainfoWorker implements Runnable{
+
 	private static final String TASK_QUEUE_NAME = MCAS.mediainfo.toString();
 
-	public static void main(String[] argv) throws Exception {
-		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("localhost");
-		final Connection connection = factory.newConnection();
-		final Channel channel = connection.createChannel();
+	public void run () {
+
+		try {
+			executeWorker();
+		} catch (Exception e) {
+			System.out.println(e.toString());
+		}
+
+	}
+	public static void executeWorker() throws Exception {
+        final Channel channel = Enqueuer.getChannel();
 
 		channel.queueDeclare(TASK_QUEUE_NAME, true, false, false, null);
 		System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
@@ -37,11 +47,28 @@ public class MediainfoWorker {
 		final Consumer consumer = new DefaultConsumer(channel) {
 			@Override
 			public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-				String message = new String(body, "UTF-8");
+				String url = new String(body, "UTF-8");
 
-				System.out.println(" [x] Received '" + message + "'");
+				System.out.println(" [x] Received '" + url + "'");
 				try {
-					extractMediainfo(message);
+
+                    Cache cache = new Cache(url);
+
+                    Model model = ModelFactory.createDefaultModel();
+                    model.read(cache.getFilePath("data.ttl"));
+
+                    String mimetype = simplifyMime(model.getResource(url).getProperty(DC.format).getString());
+
+                    if(mimetype.equals("audio")) {
+                        System.out.println(" [x] Mime type: audio ");
+                        extractMediainfoAudio(url);
+                    } else if(mimetype == "image") {
+                        System.out.println(" [x] Mime type: Image ");
+                        extractMediainfoImage(url);
+                    } else {
+                        System.out.println(" [x] Unsupported mime type: " + mimetype);
+                    }
+
 				} finally {
 					System.out.println(" [x] Done");
 					channel.basicAck(envelope.getDeliveryTag(), false);
@@ -51,18 +78,23 @@ public class MediainfoWorker {
 		channel.basicConsume(TASK_QUEUE_NAME, false, consumer);
 	}
 
-	private static void extractMediainfo(String url) throws IOException {
+    private static String simplifyMime(String mimetype) {
+        return mimetype.split("/")[0];
+    }
+
+	private static void extractMediainfoImage(String url) throws IOException {
+		Cache cache = new Cache(url);
 
 		// open model
 		Model model = ModelFactory.createDefaultModel();
-		String modelFileName = Hasher.getCacheFilename(url);
+		String modelFileName = cache.getFilePath("data.ttl");
 		File f = new File(modelFileName);
 
 		if (f.exists()) {
 			model.read(modelFileName);
 		}
 
-		String dataFileName = Hasher.getCacheFilename(url) + ".data";
+		String dataFileName = cache.getResourceFilePath();
 
 		MediaInfo info = new MediaInfo();
 		info.open(new File(dataFileName));		
@@ -73,33 +105,114 @@ public class MediainfoWorker {
 		String bits = info.get(MediaInfo.StreamKind.Image, 0, "Bit depth", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 		String compressionMode = info.get(MediaInfo.StreamKind.Image, 0, "Compression mode", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
 		
-		// Format : PNG
-		// Format/Info : Portable Network Graphic
-		// File size : 133 KiB
-		//
-		// Image
-		// Format : PNG
-		// Format/Info : Portable Network Graphic
-		// Width : 954 pixels
-		// Height : 503 pixels
-		// Bit depth : 32 bits
-		// Compression mode : Lossless
-		// Stream size : 133 KiB (100%)
-		
 		Resource r = model.createResource();
 		r.addLiteral(DC.format, format);
 		r.addLiteral(model.createProperty("http://ogp.me/ns#image:height"), height);
 		r.addLiteral(model.createProperty("http://ogp.me/ns#image:width"), width);
 		model.getResource(url).addProperty(MCAS.mediainfo, r);
-		
+		System.out.println(model.getResource(url).addProperty(MCAS.mediainfo, r));
 		FileWriter out = new FileWriter(modelFileName);
+
+		printTurtle(model, out, cache);
+	}
+
+	private static void extractMediainfoAudio(String url) throws IOException {
+		Cache cache = new Cache(url);
+
+		// open model
+		Model model = ModelFactory.createDefaultModel();
+		String modelFileName = cache.getFilePath("data.ttl");
+		String COAL_SERVER_URI = "http://coal.s16a.org/resource";
+		String MEDIA_URI = cache.getUrl();
+
+		File f = new File(modelFileName);
+
+		if (f.exists()) {
+			model.read(modelFileName);
+		}
+
+		String dataFileName = cache.getFilePath("data.mp3");
+
+		MediaInfo info = new MediaInfo();
+		info.open(new File(dataFileName));
+
+		String fileExtension = info.get(MediaInfo.StreamKind.General, 0, "FileExtension", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		Long fileSize = Long.parseLong(info.get(MediaInfo.StreamKind.General, 0, "FileSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
+		String format = info.get(MediaInfo.StreamKind.Audio, 0, "Format", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String formatVersion = info.get(MediaInfo.StreamKind.Audio, 0, "Format_Version", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String formatProfile = info.get(MediaInfo.StreamKind.Audio, 0, "Format_Profile", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		String codecId = info.get(MediaInfo.StreamKind.Audio, 0, "CodecID", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		Long duration = Long.parseLong(info.get(MediaInfo.StreamKind.Audio, 0, "Duration", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
+		String bitRateMode = info.get(MediaInfo.StreamKind.Audio, 0, "BitRate_Mode", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		Integer bitRate = Integer.parseInt(info.get(MediaInfo.StreamKind.Audio, 0, "BitRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
+		Integer channels = Integer.parseInt(info.get(MediaInfo.StreamKind.Audio, 0, "Channels", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
+		String channelPositions = info.get(MediaInfo.StreamKind.Audio, 0, "ChannelPositions", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name);
+		Integer samplingRate = Integer.parseInt(info.get(MediaInfo.StreamKind.Audio, 0, "SamplingRate", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
+		Long streamSize = Long.parseLong(info.get(MediaInfo.StreamKind.Audio, 0, "StreamSize", MediaInfo.InfoKind.Text, MediaInfo.InfoKind.Name));
+
+
+		Resource r = model.getResource(url);
+		String nfo = "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo/#";
+		model.setNsPrefix("nfo", nfo);
+		String nie = "http://www.semanticdesktop.org/ontologies/2007/03/22/nfo/#";
+		model.setNsPrefix("nie", nie);
+		String dbo = "http://dbpedia.org/ontology/";
+		model.setNsPrefix("dbo", dbo);
+        String ebu = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
+        model.setNsPrefix("ebu", ebu);
+
+		r.addLiteral(model.createProperty(nfo + "fileSize"), fileSize);
+		r.addLiteral(model.createProperty(dbo + "fileExtension"), fileExtension);
+
+		r.addLiteral(model.createProperty("format"), format);
+		r.addLiteral(model.createProperty("formatVersion"), formatVersion);
+		r.addLiteral(model.createProperty("formatProfile"), formatProfile);
+
+		r.addLiteral(model.createProperty(nfo + "duration"), duration);
+		r.addLiteral(model.createProperty(nfo + "averageBitrate"), bitRate);
+		r.addLiteral(model.createProperty(nfo + "bitRateMode"), bitRateMode);
+
+		r.addLiteral(model.createProperty(ebu + "audioChannelNumber"), channels);
+		r.addLiteral(model.createProperty(nfo + "sampleRate"), samplingRate);
+
+
+		String oa = "http://www.w3.org/ns/oa#";
+		model.setNsPrefix("oa", oa);
+		String nif = "http://persistence.uni-leipzig.org/nlp2rdf/ontologies/nif-core#";
+		model.setNsPrefix("nif", nif);
+		Resource segment = model.createResource(MEDIA_URI + "#t=" + "1,30");
+		segment.addProperty(DCTerms.isPartOf, MEDIA_URI);
+		segment.addProperty(RDF.type, model.createResource(nif + "Context"));
+		segment.addProperty(RDF.type, model.createResource(nif + "RFC5147String"));
+		segment.addProperty(model.createProperty(nif + "isString"), "recognizedText");
+		Resource annotation = model.createResource("#anno1");
+		annotation.addProperty(RDF.type, model.createResource(oa + "Annotation"));
+		annotation.addProperty(model.createProperty(oa + "hasTarget"), MEDIA_URI);
+		annotation.addProperty(model.createProperty(oa + "annotatedBy"), MCAS.speech);
+		annotation.addProperty(model.createProperty(oa + "hasBody"), segment);
+		annotation.addProperty(model.createProperty(oa + "motivatedBy"), model.createResource(oa + "describing"));
+
+		FileWriter out = new FileWriter(modelFileName);
+
+		printTurtle(model, out, cache);
+	}
+
+	private static void printTurtle(Model model, FileWriter writer, Cache cache) {
 		try {
-			model.write(out, "TURTLE");
+			System.out.println("Mediainfo try save");
+			model.write(writer, "TURTLE");
 		} finally {
 			try {
-				out.close();
+				writer.close();
+
+				try {
+					Enqueuer.workerFinished(MCAS.mediainfo, cache);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			} catch (IOException closeException) {
 				// ignore
+				System.out.println("Fehler!!!");
 			}
 		}
 	}

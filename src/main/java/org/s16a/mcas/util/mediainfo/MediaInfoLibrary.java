@@ -1,4 +1,4 @@
-package org.s16a.mcas.util;
+package org.s16a.mcas.util.mediainfo;
 
 import static java.util.Collections.singletonMap;
 
