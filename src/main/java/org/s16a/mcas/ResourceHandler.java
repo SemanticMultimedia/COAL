@@ -190,7 +190,7 @@ public class ResourceHandler {
         Property topic = model.createProperty(foaf + "topic");
 		rdfDocument.addLiteral(topic, MEDIA_URI);
 		rdfDocument.addLiteral(model.createProperty(foaf + "maker"), "COAL");
-		rdfDocument.addLiteral(DC.identifier, filename);
+		rdfDocument.addLiteral(DC.identifier, Cache.hash(MEDIA_URI));
 
         Resource file = model.createResource(MEDIA_URI);
         Integer contentLength = Integer.parseInt(map.get("Content-Length").get(0));
